@@ -1,0 +1,45 @@
+{
+  "name": "@magnit-ce/code-tests",
+  "version": "0.0.4",
+  "description": "A custom html element that provides a selection gallery as a dialog, to mimic an os-native file browser.",
+  "type": "module",
+  "main": "dist/code-tests.js",
+  "module": "dist/code-tests.mjs",
+  "types": "dist/code-tests.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/code-tests.ts --format cjs,esm --dts --clean",
+    "build-vanilla": "tsup src/code-tests.ts --format esm --dts --clean --outDir ./vanilla",
+    "minify": "tsup src/code-tests.ts --format esm --config ./tsup.config.min.ts --outDir ./vanilla --minify",
+    "lint": "tsup src/code-tests.ts --format esm --tsconfig ./tsconfig.lint.json",
+    "package": "npm run build && npm run build-vanilla && npm run minify",
+    "release": "npm run package && changeset publish"
+  },
+  "keywords": [
+    "custom",
+    "element",
+    "html",
+    "browser",
+    "test",
+    "unit test",
+    "functional test",
+    "automated"
+  ],
+  "author": "catapart",
+  "license": "CC0-1.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/catapart/magnitce-code-tests"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.27.7",
+    "minify": "^11.4.0",
+    "terser": "^5.31.3",
+    "tsup": "^8.2.0",
+    "typescript": "^5.5.3"
+  },
+  "dependencies": {
+  }
+}

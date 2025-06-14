@@ -1,0 +1,28 @@
+declare class TestPromise<T> extends Promise<T> {
+    toBeDefined(): Promise<void>;
+    toBe(value: any, exact?: boolean): Promise<void>;
+    toContainText(value: string): Promise<void>;
+    toHaveAttribute(value: string): Promise<void>;
+}
+declare class CodeTests {
+    #private;
+    static timeoutMS: number;
+    static expect<T>(value: T): TestPromise<T>;
+}
+declare function expect(value: any): TestPromise<any>;
+
+type CodeTestsProperties = {};
+declare class CodeTestsElement extends HTMLElement {
+    #private;
+    componentParts: Map<string, HTMLElement>;
+    getElement<T extends HTMLElement = HTMLElement>(id: string): T;
+    findElement<T extends HTMLElement = HTMLElement>(id: string): T;
+    constructor();
+    connectedCallback(): void;
+    disconnectedCallback(): void;
+    loadTests(path: string): Promise<void>;
+    runTests(): Promise<void>;
+    static create(properties: CodeTestsProperties): HTMLElement;
+}
+
+export { CodeTests, CodeTestsElement, type CodeTestsProperties, expect };

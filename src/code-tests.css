@@ -1,0 +1,26 @@
+:host([success="true"])
+{
+    color: green;
+}
+:host(.running)
+{
+    color: blue;
+}
+:host([success="false"])
+{
+    color: red;
+}
+
+li[success="true"]
+{
+    color: green;
+}
+
+li[success="false"]
+{
+    color: red;
+}
+li.running
+{
+    color: blue;
+}
