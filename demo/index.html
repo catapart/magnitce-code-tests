@@ -20,7 +20,15 @@
         <article class="basic">
             <h2>Basic Example</h2>
             <div class="example">
-                <code-tests src="tests/library.tests.js"></code-tests>
+                <code-tests src="tests/direct-access.tests.js">
+                    <span slot="title">Direct Access</span>
+                </code-tests>
+                <code-tests src="tests/library.tests.js">
+                    <span slot="title">Library</span>
+                </code-tests>
+                <code-tests src="tests/before-after.tests.js" in-order>
+                    <span slot="title">Before/After</span>
+                </code-tests>
             </div>
         </article>
         <article class="events">

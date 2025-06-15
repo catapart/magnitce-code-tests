@@ -1,6 +1,6 @@
 import { default as style } from './code-tests.css?raw';
 import { default as html } from './code-tests.html?raw';
-import { CodeTests, expect, Tests } from './api';
+import { AFTERALL, AFTEREACH, BEFOREALL, BEFOREEACH, CodeTests, expect, Test, Tests } from './api';
 
 export type CodeTestsProperties = 
 {
@@ -25,6 +25,8 @@ export class CodeTestsElement extends HTMLElement
         return this.componentParts.get(id) as T;
     }
     findElement<T extends HTMLElement = HTMLElement>(id: string) { return this.shadowRoot!.getElementById(id) as T; }
+
+    #hooks: Map<symbol, Map<Test, Set<string>>> = new Map();
 
     constructor()
     {
@@ -82,11 +84,16 @@ export class CodeTestsElement extends HTMLElement
     {
         try
         {
-            const currentPath = window.location.href;
-            const moduleDirectory = currentPath + path.replace(/(.*?)[^/]*\..*$/, '$1');
+            const lastSlashIndexInCurrentPath = window.location.href.lastIndexOf('/');
+            const currentPathHasExtension = window.location.href.substring(lastSlashIndexInCurrentPath).indexOf('.') != -1;
+            const currentPath = (currentPathHasExtension == true)
+            ? window.location.href.substring(0, lastSlashIndexInCurrentPath + 1)
+            : window.location.href;
+            const moduleDirectory = currentPath + path.substring(0, path.lastIndexOf('/') + 1);
             const modulePath = currentPath + path;
             let moduleContent = await (await fetch(modulePath)).text();
             moduleContent = moduleContent.replaceAll(/['"`](((\.\/)|(\.\.\/))+(.*))['"`]/g, `'${moduleDirectory}$1'`);
+            // console.log(moduleContent);
             // console.log(moduleContent);
             const moduleFile = new File([moduleContent], path.substring(path.lastIndexOf('/')), { type: 'text/javascript' });
             const moduleURL = URL.createObjectURL(moduleFile);
@@ -100,11 +107,108 @@ export class CodeTestsElement extends HTMLElement
                 throw new Error(`Unable to find tests definition in file at path: ${path}`);
             }
 
+            const beforeAll = tests[BEFOREALL];
+            if(beforeAll != null)
+            {
+                const hookMap = this.#hooks.get(BEFOREALL);
+                if(hookMap == null)
+                {
+                    const map = new Map();
+                    map.set(beforeAll, new Set());
+                    this.#hooks.set(BEFOREALL, map);
+                }
+            }
+            const beforeEach = tests[BEFOREEACH];
+            if(beforeEach != null)
+            {
+                const hookMap = this.#hooks.get(BEFOREEACH);
+                if(hookMap == null)
+                {
+                    const map = new Map();
+                    map.set(beforeEach, new Set());
+                    this.#hooks.set(BEFOREEACH, map);
+                }
+            }
+            const afterAll = tests[AFTERALL];
+            if(afterAll != null)
+            {
+                const hookMap = this.#hooks.get(AFTERALL);
+                if(hookMap == null)
+                {
+                    const map = new Map();
+                    map.set(afterAll, new Set());
+                    this.#hooks.set(AFTERALL, map);
+                }
+            }
+            const afterEach = tests[AFTEREACH];
+            if(afterEach != null)
+            {
+                const hookMap = this.#hooks.get(AFTEREACH);
+                if(hookMap == null)
+                {
+                    const map = new Map();
+                    map.set(afterEach, new Set());
+                    this.#hooks.set(AFTEREACH, map);
+                }
+            }
+
             for(const [description, test] of Object.entries(tests))
             {
-                this.#addTest(description, test);
+                const id = this.#addTest(description, test);
+
+                const beforeAll = tests[BEFOREALL];
+                if(beforeAll != null)
+                {
+                    const hookMap = this.#hooks.get(BEFOREALL);
+                    if(hookMap != null)
+                    {
+                        const testIds = hookMap.get(beforeAll);
+                        if(testIds != null)
+                        {
+                            testIds.add(id);
+                        }
+                    }
+                }
+                const beforeEach = tests[BEFOREEACH];
+                if(beforeEach != null)
+                {
+                    const hookMap = this.#hooks.get(BEFOREEACH);
+                    if(hookMap != null)
+                    {
+                        const testIds = hookMap.get(beforeEach);
+                        if(testIds != null)
+                        {
+                            testIds.add(id);
+                        }
+                    }
+                }
+                const afterAll = tests[AFTERALL];
+                if(afterAll != null)
+                {
+                    const hookMap = this.#hooks.get(AFTERALL);
+                    if(hookMap != null)
+                    {
+                        const testIds = hookMap.get(afterAll);
+                        if(testIds != null)
+                        {
+                            testIds.add(id);
+                        }
+                    }
+                }
+                const afterEach = tests[AFTEREACH];
+                if(afterEach != null)
+                {
+                    const hookMap = this.#hooks.get(AFTEREACH);
+                    if(hookMap != null)
+                    {
+                        const testIds = hookMap.get(afterEach);
+                        if(testIds != null)
+                        {
+                            testIds.add(id);
+                        }
+                    }
+                }
             }
-            // console.log(module);
         }
         catch(error)
         {
@@ -116,18 +220,47 @@ export class CodeTestsElement extends HTMLElement
     {
         this.classList.add('running');
         this.toggleAttribute('success', false);
-        const promises = [];
-        for(const [id, test] of this.#tests)
+
+        const inOrder = this.hasAttribute('in-order');
+
+        const beforeHooks = this.#hooks.get(BEFOREALL);
+        if(beforeHooks != null)
         {
-            promises.push(this.#runTest(id, test));
+            for(const [hook, ids] of beforeHooks)
+            {
+                hook();
+            }
         }
-        await Promise.all(promises);
+        if(inOrder == false)
+        {
+            const promises = [];
+            for(const [id, test] of this.#tests)
+            {
+                promises.push(this.#runTest(id, test));
+            }
+            await Promise.all(promises);
+        }
+        else
+        {
+            for(const [id, test] of this.#tests)
+            {
+                await this.#runTest(id, test)
+            } 
+        }
+        const afterHooks = this.#hooks.get(AFTERALL);
+        if(afterHooks != null)
+        {
+            for(const [hook, ids] of afterHooks)
+            {
+                hook();
+            }
+        }
 
         const failedTests = this.shadowRoot!.querySelectorAll('[success="false"]');
         this.setAttribute('success', failedTests.length == 0 ? 'true' : 'false');
         this.classList.remove('running');
     }
-    async #runTest(testId: string, test: (...args: any[]) => void|Promise<void>)
+    async #runTest(testId: string, test: Test)
     {
         const testElement = this.getElement('tests').querySelector(`[data-test-id="${testId}"]`);
         testElement?.toggleAttribute('success', false);
@@ -148,7 +281,32 @@ export class CodeTestsElement extends HTMLElement
         // execute test
         try
         {
+            const beforeHooks = this.#hooks.get(BEFOREEACH);
+            if(beforeHooks != null)
+            {
+                for(const [hook, ids] of beforeHooks)
+                {
+                    if(ids.has(testId))
+                    {
+                        hook();
+                    }
+                }
+            }
+
             await test();
+
+            const afterHooks = this.#hooks.get(AFTEREACH);
+            if(afterHooks != null)
+            {
+                for(const [hook, ids] of afterHooks)
+                {
+                    if(ids.has(testId))
+                    {
+                        hook();
+                    }
+                }
+            }
+
             testElement?.classList.remove('running');
             if(testElement != null)
             {
@@ -173,12 +331,14 @@ export class CodeTestsElement extends HTMLElement
         return element;
     }
 
-    #tests: Map<string, (...args: any[]) => void|Promise<void>> = new Map();
-    #addTest(description: string, test: (...args: any[]) => void|Promise<void>)
+    #tests: Map<string, Test> = new Map();
+    #addTest(description: string, test: Test)
     {
+        // integrate test
         const testId = generateId();
         this.#tests.set(testId, test);
         
+        // create display
         const testElement = document.createElement('li');
         testElement.dataset.testId = testId;
         const detailsElement = document.createElement('details');
@@ -212,6 +372,8 @@ export class CodeTestsElement extends HTMLElement
         testElement.append(detailsElement);
 
         this.getElement('tests').append(testElement);
+
+        return testId;
     }
     #setTestError(testElement: HTMLLIElement, message: string, error?: unknown)
     {
@@ -269,5 +431,12 @@ if(customElements.get(COMPONENT_TAG_NAME) == null)
 {
     customElements.define(COMPONENT_TAG_NAME, CodeTestsElement);
 }
-
-export { CodeTests, expect };
+export
+{ 
+    CodeTests,
+    expect,
+    BEFOREALL,
+    BEFOREEACH,
+    AFTERALL,
+    AFTEREACH
+};

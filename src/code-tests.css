@@ -1,3 +1,8 @@
+:host
+{
+    user-select: none;
+}
+
 :host([success="true"])
 {
     color: green;

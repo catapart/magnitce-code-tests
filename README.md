@@ -1,7 +1,7 @@
 # magnitce-code-tests
 A custom `HTMLElement` that runs tests in-browser and displays the results. 
 
-Package size: ~Xkb minified, ~Ykb verbose.
+Package size: ~7kb minified, ~13kb verbose.
 
 ## Quick Reference
 ```html
@@ -51,6 +51,15 @@ import { CodeTestsElement, CodeTests, expect[, etc...] } from "@magnit-ce/code-t
 
 ## Overview
 The `<code-tests>` element is a 
+
+## Hooks
+beforeAll:  
+beforeEach:  
+afterEach:  
+afterAll:  
+
+## Providers
+`export` a constant named `providers` to inject arbitrary objects into test calls
 
 ## Events
 The `<code-tests>` element dispatches the following events:

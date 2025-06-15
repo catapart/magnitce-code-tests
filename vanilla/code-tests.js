@@ -1,5 +1,5 @@
 // src/code-tests.css?raw
-var code_tests_default = ':host([success="true"])\r\n{\r\n    color: green;\r\n}\r\n:host(.running)\r\n{\r\n    color: blue;\r\n}\r\n:host([success="false"])\r\n{\r\n    color: red;\r\n}\r\n\r\nli[success="true"]\r\n{\r\n    color: green;\r\n}\r\n\r\nli[success="false"]\r\n{\r\n    color: red;\r\n}\r\nli.running\r\n{\r\n    color: blue;\r\n}';
+var code_tests_default = ':host\r\n{\r\n    user-select: none;\r\n}\r\n\r\n:host([success="true"])\r\n{\r\n    color: green;\r\n}\r\n:host(.running)\r\n{\r\n    color: blue;\r\n}\r\n:host([success="false"])\r\n{\r\n    color: red;\r\n}\r\n\r\nli[success="true"]\r\n{\r\n    color: green;\r\n}\r\n\r\nli[success="false"]\r\n{\r\n    color: red;\r\n}\r\nli.running\r\n{\r\n    color: blue;\r\n}';
 
 // src/code-tests.html?raw
 var code_tests_default2 = '<slot name="header">\r\n    <header id="header">\r\n        <slot name="title">Tests</slot>\r\n        <button type="button" class="run" data-all>\u23F5</button>\r\n    </header>\r\n</slot>\r\n<ul id="tests"></ul>';
@@ -8,7 +8,7 @@ var code_tests_default2 = '<slot name="header">\r\n    <header id="header">\r\n 
 var TestPromise = class extends Promise {
   async toBeDefined() {
     const target = await this;
-    if (typeof target == "undefined") {
+    if (target == void 0) {
       throw new Error("Value is undefined");
     }
   }
@@ -34,7 +34,11 @@ var TestPromise = class extends Promise {
     }
   }
 };
-var CodeTests = class _CodeTests {
+var BEFOREALL = Symbol("beforeAll");
+var BEFOREEACH = Symbol("beforeEach");
+var AFTERALL = Symbol("afterAll");
+var AFTEREACH = Symbol("afterEach");
+var CodeTests = class {
   static timeoutMS = 500;
   static #expectInterval;
   static #expectPromise;
@@ -45,30 +49,7 @@ var CodeTests = class _CodeTests {
         resolve(result);
         return;
       }
-      if (typeof value !== "undefined") {
-        resolve(value);
-        return;
-      }
-      if (this.#expectInterval != null) {
-        clearInterval(this.#expectInterval);
-      }
-      const startTime = Date.now();
-      this.#expectInterval = setInterval(() => {
-        const currentTime = Date.now();
-        if (currentTime - startTime > _CodeTests.timeoutMS) {
-          clearInterval(this.#expectInterval);
-          reject();
-        }
-        if (typeof value !== "undefined") {
-          clearInterval(this.#expectInterval);
-          if (_CodeTests.#expectPromise != null) {
-            resolve(value);
-          } else {
-            console.error("Expect Promise is not set");
-            reject();
-          }
-        }
-      }, 20);
+      resolve(value);
     });
     return promise;
   }
@@ -95,6 +76,7 @@ var CodeTestsElement = class extends HTMLElement {
   findElement(id) {
     return this.shadowRoot.getElementById(id);
   }
+  #hooks = /* @__PURE__ */ new Map();
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
@@ -139,8 +121,10 @@ var CodeTestsElement = class extends HTMLElement {
   }
   async loadTests(path) {
     try {
-      const currentPath = window.location.href;
-      const moduleDirectory = currentPath + path.replace(/(.*?)[^/]*\..*$/, "$1");
+      const lastSlashIndexInCurrentPath = window.location.href.lastIndexOf("/");
+      const currentPathHasExtension = window.location.href.substring(lastSlashIndexInCurrentPath).indexOf(".") != -1;
+      const currentPath = currentPathHasExtension == true ? window.location.href.substring(0, lastSlashIndexInCurrentPath + 1) : window.location.href;
+      const moduleDirectory = currentPath + path.substring(0, path.lastIndexOf("/") + 1);
       const modulePath = currentPath + path;
       let moduleContent = await (await fetch(modulePath)).text();
       moduleContent = moduleContent.replaceAll(/['"`](((\.\/)|(\.\.\/))+(.*))['"`]/g, `'${moduleDirectory}$1'`);
@@ -151,8 +135,84 @@ var CodeTestsElement = class extends HTMLElement {
       if (tests == void 0) {
         throw new Error(`Unable to find tests definition in file at path: ${path}`);
       }
+      const beforeAll = tests[BEFOREALL];
+      if (beforeAll != null) {
+        const hookMap = this.#hooks.get(BEFOREALL);
+        if (hookMap == null) {
+          const map = /* @__PURE__ */ new Map();
+          map.set(beforeAll, /* @__PURE__ */ new Set());
+          this.#hooks.set(BEFOREALL, map);
+        }
+      }
+      const beforeEach = tests[BEFOREEACH];
+      if (beforeEach != null) {
+        const hookMap = this.#hooks.get(BEFOREEACH);
+        if (hookMap == null) {
+          const map = /* @__PURE__ */ new Map();
+          map.set(beforeEach, /* @__PURE__ */ new Set());
+          this.#hooks.set(BEFOREEACH, map);
+        }
+      }
+      const afterAll = tests[AFTERALL];
+      if (afterAll != null) {
+        const hookMap = this.#hooks.get(AFTERALL);
+        if (hookMap == null) {
+          const map = /* @__PURE__ */ new Map();
+          map.set(afterAll, /* @__PURE__ */ new Set());
+          this.#hooks.set(AFTERALL, map);
+        }
+      }
+      const afterEach = tests[AFTEREACH];
+      if (afterEach != null) {
+        const hookMap = this.#hooks.get(AFTEREACH);
+        if (hookMap == null) {
+          const map = /* @__PURE__ */ new Map();
+          map.set(afterEach, /* @__PURE__ */ new Set());
+          this.#hooks.set(AFTEREACH, map);
+        }
+      }
       for (const [description, test] of Object.entries(tests)) {
-        this.#addTest(description, test);
+        const id = this.#addTest(description, test);
+        const beforeAll2 = tests[BEFOREALL];
+        if (beforeAll2 != null) {
+          const hookMap = this.#hooks.get(BEFOREALL);
+          if (hookMap != null) {
+            const testIds = hookMap.get(beforeAll2);
+            if (testIds != null) {
+              testIds.add(id);
+            }
+          }
+        }
+        const beforeEach2 = tests[BEFOREEACH];
+        if (beforeEach2 != null) {
+          const hookMap = this.#hooks.get(BEFOREEACH);
+          if (hookMap != null) {
+            const testIds = hookMap.get(beforeEach2);
+            if (testIds != null) {
+              testIds.add(id);
+            }
+          }
+        }
+        const afterAll2 = tests[AFTERALL];
+        if (afterAll2 != null) {
+          const hookMap = this.#hooks.get(AFTERALL);
+          if (hookMap != null) {
+            const testIds = hookMap.get(afterAll2);
+            if (testIds != null) {
+              testIds.add(id);
+            }
+          }
+        }
+        const afterEach2 = tests[AFTEREACH];
+        if (afterEach2 != null) {
+          const hookMap = this.#hooks.get(AFTEREACH);
+          if (hookMap != null) {
+            const testIds = hookMap.get(afterEach2);
+            if (testIds != null) {
+              testIds.add(id);
+            }
+          }
+        }
       }
     } catch (error) {
       this.#addProcessError("An error occurred while loading the tasks:", error);
@@ -161,11 +221,30 @@ var CodeTestsElement = class extends HTMLElement {
   async runTests() {
     this.classList.add("running");
     this.toggleAttribute("success", false);
-    const promises = [];
-    for (const [id, test] of this.#tests) {
-      promises.push(this.#runTest(id, test));
+    const inOrder = this.hasAttribute("in-order");
+    const beforeHooks = this.#hooks.get(BEFOREALL);
+    if (beforeHooks != null) {
+      for (const [hook, ids] of beforeHooks) {
+        hook();
+      }
     }
-    await Promise.all(promises);
+    if (inOrder == false) {
+      const promises = [];
+      for (const [id, test] of this.#tests) {
+        promises.push(this.#runTest(id, test));
+      }
+      await Promise.all(promises);
+    } else {
+      for (const [id, test] of this.#tests) {
+        await this.#runTest(id, test);
+      }
+    }
+    const afterHooks = this.#hooks.get(AFTERALL);
+    if (afterHooks != null) {
+      for (const [hook, ids] of afterHooks) {
+        hook();
+      }
+    }
     const failedTests = this.shadowRoot.querySelectorAll('[success="false"]');
     this.setAttribute("success", failedTests.length == 0 ? "true" : "false");
     this.classList.remove("running");
@@ -183,7 +262,23 @@ var CodeTestsElement = class extends HTMLElement {
       detailsElement.open = false;
     }
     try {
+      const beforeHooks = this.#hooks.get(BEFOREEACH);
+      if (beforeHooks != null) {
+        for (const [hook, ids] of beforeHooks) {
+          if (ids.has(testId)) {
+            hook();
+          }
+        }
+      }
       await test();
+      const afterHooks = this.#hooks.get(AFTEREACH);
+      if (afterHooks != null) {
+        for (const [hook, ids] of afterHooks) {
+          if (ids.has(testId)) {
+            hook();
+          }
+        }
+      }
       testElement?.classList.remove("running");
       if (testElement != null) {
         testElement.setAttribute("success", "true");
@@ -229,6 +324,7 @@ var CodeTestsElement = class extends HTMLElement {
     detailsElement.append(errorElement);
     testElement.append(detailsElement);
     this.getElement("tests").append(testElement);
+    return testId;
   }
   #setTestError(testElement, message, error) {
     if (error instanceof Error) {
@@ -272,6 +368,10 @@ if (customElements.get(COMPONENT_TAG_NAME) == null) {
   customElements.define(COMPONENT_TAG_NAME, CodeTestsElement);
 }
 export {
+  AFTERALL,
+  AFTEREACH,
+  BEFOREALL,
+  BEFOREEACH,
   CodeTests,
   CodeTestsElement,
   expect

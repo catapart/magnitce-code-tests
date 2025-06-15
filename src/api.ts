@@ -4,7 +4,7 @@ export class TestPromise<T> extends Promise<T>
     {
         const target = await this;
 
-        if(typeof target == 'undefined')
+        if(target == undefined)
         {
             throw new Error("Value is undefined");
         }
@@ -42,8 +42,12 @@ export class TestPromise<T> extends Promise<T>
         }
     }
 }
-
-export type Tests = { [key: string]: (...args: any[]) => void|Promise<void> };
+export type Test = (...args: any[]) => void|Promise<void>;
+export type Tests = { [key: string|symbol]: Test };
+export const BEFOREALL = Symbol("beforeAll");
+export const BEFOREEACH = Symbol("beforeEach");
+export const AFTERALL = Symbol("afterAll");
+export const AFTEREACH = Symbol("afterEach");
 
 export class CodeTests
 {
@@ -61,41 +65,8 @@ export class CodeTests
                 resolve(result);
                 return;
             }
-            
-            if(typeof value !== 'undefined')
-            {
-                resolve(value);
-                return;
-            }
 
-            if(this.#expectInterval != null)
-            {
-                clearInterval(this.#expectInterval);
-            }
-
-            const startTime = Date.now();
-            this.#expectInterval = setInterval(() =>
-            {
-                const currentTime = Date.now();
-                if(currentTime - startTime > CodeTests.timeoutMS)
-                {
-                    clearInterval(this.#expectInterval);
-                    reject();
-                }
-                if(typeof value !== 'undefined')
-                {
-                    clearInterval(this.#expectInterval);
-                    if(CodeTests.#expectPromise != null)
-                    {
-                        resolve(value);
-                    }
-                    else
-                    {
-                        console.error("Expect Promise is not set");
-                        reject();
-                    }
-                }
-            }, 20);
+            resolve(value);
         });
         return promise;
     }

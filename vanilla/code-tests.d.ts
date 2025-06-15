@@ -4,6 +4,10 @@ declare class TestPromise<T> extends Promise<T> {
     toContainText(value: string): Promise<void>;
     toHaveAttribute(value: string): Promise<void>;
 }
+declare const BEFOREALL: unique symbol;
+declare const BEFOREEACH: unique symbol;
+declare const AFTERALL: unique symbol;
+declare const AFTEREACH: unique symbol;
 declare class CodeTests {
     #private;
     static timeoutMS: number;
@@ -25,4 +29,4 @@ declare class CodeTestsElement extends HTMLElement {
     static create(properties: CodeTestsProperties): HTMLElement;
 }
 
-export { CodeTests, CodeTestsElement, type CodeTestsProperties, expect };
+export { AFTERALL, AFTEREACH, BEFOREALL, BEFOREEACH, CodeTests, CodeTestsElement, type CodeTestsProperties, expect };

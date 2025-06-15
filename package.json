@@ -1,6 +1,6 @@
 {
   "name": "@magnit-ce/code-tests",
-  "version": "0.0.4",
+  "version": "0.0.0",
   "description": "A custom html element that provides a selection gallery as a dialog, to mimic an os-native file browser.",
   "type": "module",
   "main": "dist/code-tests.js",
@@ -23,9 +23,10 @@
     "html",
     "browser",
     "test",
-    "unit test",
-    "functional test",
-    "automated"
+    "unit",
+    "functional",
+    "automated",
+    "esm"
   ],
   "author": "catapart",
   "license": "CC0-1.0",
