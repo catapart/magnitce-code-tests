@@ -14,6 +14,7 @@
     "build-vanilla": "tsup src/code-tests.ts --format esm --dts --clean --outDir ./vanilla",
     "minify": "tsup src/code-tests.ts --format esm --config ./tsup.config.min.ts --outDir ./vanilla --minify",
     "lint": "tsup src/code-tests.ts --format esm --tsconfig ./tsconfig.lint.json",
+    "dev-pack": "npm run build-vanilla",
     "package": "npm run build && npm run build-vanilla && npm run minify",
     "release": "npm run package && changeset publish"
   },

@@ -1,6 +1,6 @@
 import { default as style } from './code-tests.css?raw';
 import { default as html } from './code-tests.html?raw';
-import { AFTERALL, AFTEREACH, BEFOREALL, BEFOREEACH, CodeTests, expect, Test, Tests } from './api';
+import { AFTERALL, AFTEREACH, BEFOREALL, BEFOREEACH, CodeTests, expect, Test, TestResultType, Tests } from './api';
 
 export type CodeTestsProperties = 
 {
@@ -27,6 +27,17 @@ export class CodeTestsElement extends HTMLElement
     findElement<T extends HTMLElement = HTMLElement>(id: string) { return this.shadowRoot!.getElementById(id) as T; }
 
     #hooks: Map<symbol, Map<Test, Set<string>>> = new Map();
+    #hookIds: {
+        [BEFOREALL]: string,
+        [BEFOREEACH]: string,
+        [AFTEREACH]: string,
+        [AFTERALL]: string,
+    } = {
+        [BEFOREALL]: generateId(),
+        [BEFOREEACH]: generateId(),
+        [AFTEREACH]: generateId(),
+        [AFTERALL]: generateId(),
+    }
 
     constructor()
     {
@@ -117,6 +128,9 @@ export class CodeTestsElement extends HTMLElement
                     map.set(beforeAll, new Set());
                     this.#hooks.set(BEFOREALL, map);
                 }
+                const element = this.#createTest(this.#hookIds[BEFOREALL], this.getAttribute('before-all-label') ?? "Before All:");
+                element.toggleAttribute('data-before-all', true);
+                this.getElement('tests').prepend(element);
             }
             const beforeEach = tests[BEFOREEACH];
             if(beforeEach != null)
@@ -156,7 +170,6 @@ export class CodeTestsElement extends HTMLElement
             {
                 const id = this.#addTest(description, test);
 
-                const beforeAll = tests[BEFOREALL];
                 if(beforeAll != null)
                 {
                     const hookMap = this.#hooks.get(BEFOREALL);
@@ -169,7 +182,6 @@ export class CodeTestsElement extends HTMLElement
                         }
                     }
                 }
-                const beforeEach = tests[BEFOREEACH];
                 if(beforeEach != null)
                 {
                     const hookMap = this.#hooks.get(BEFOREEACH);
@@ -182,7 +194,6 @@ export class CodeTestsElement extends HTMLElement
                         }
                     }
                 }
-                const afterAll = tests[AFTERALL];
                 if(afterAll != null)
                 {
                     const hookMap = this.#hooks.get(AFTERALL);
@@ -195,7 +206,6 @@ export class CodeTestsElement extends HTMLElement
                         }
                     }
                 }
-                const afterEach = tests[AFTEREACH];
                 if(afterEach != null)
                 {
                     const hookMap = this.#hooks.get(AFTEREACH);
@@ -262,23 +272,32 @@ export class CodeTestsElement extends HTMLElement
     }
     async #runTest(testId: string, test: Test)
     {
-        const testElement = this.getElement('tests').querySelector(`[data-test-id="${testId}"]`);
-        testElement?.toggleAttribute('success', false);
-        testElement?.classList.add('running');
+        const testElement = this.getElement('tests').querySelector<HTMLElement>(`[data-test-id="${testId}"]`);
+        if(testElement == null)
+        {
+            this.#addProcessError(`Unable to find test element for test: ${testId}`);
+            return;
+        }
+        testElement.toggleAttribute('success', false);
+        testElement.classList.add('running');
         
         // clean up old test result
-        const errorMessageElement = testElement?.querySelector(".error-message");
+        const errorMessageElement = testElement.querySelector(".error-message");
         if(errorMessageElement != null)
         {
             errorMessageElement.textContent = "";
         }
-        const detailsElement = testElement?.querySelector('details');
+        const detailsElement = testElement.querySelector('details');
         if(detailsElement != null)
         {
             detailsElement.open = false;
         }
 
         // execute test
+        let beforeResult;
+        let testResult;
+        let afterResult;
+
         try
         {
             const beforeHooks = this.#hooks.get(BEFOREEACH);
@@ -288,12 +307,13 @@ export class CodeTestsElement extends HTMLElement
                 {
                     if(ids.has(testId))
                     {
-                        hook();
+                        beforeResult = await hook();
+                        break;
                     }
                 }
             }
 
-            await test();
+            testResult = await test();
 
             const afterHooks = this.#hooks.get(AFTEREACH);
             if(afterHooks != null)
@@ -302,25 +322,180 @@ export class CodeTestsElement extends HTMLElement
                 {
                     if(ids.has(testId))
                     {
-                        hook();
+                        afterResult = await hook();
+                        break;
                     }
                 }
             }
 
-            testElement?.classList.remove('running');
-            if(testElement != null)
+            if(beforeResult != null)
             {
-                testElement.setAttribute('success', 'true');
+                this.#handleTestResult(testElement, beforeResult, true);
             }
+
+            this.#handleTestResult(testElement, testResult, true);
+
+            if(afterResult != null)
+            {
+                this.#handleTestResult(testElement, afterResult, true);
+            }
+
         }
         catch(error)
         {
-            testElement?.classList.remove('running');
-            if(testElement != null)
-            {
-                this.#setTestError(testElement as HTMLLIElement, "Failed:", error);
-            }
+            this.#handleTestResult(testElement, testResult, false, error as Error);
             console.error(error);
+        }
+        finally
+        {
+            testElement?.classList.remove('running');
+        }
+    }
+    #handleTestResult(testElement: HTMLElement, result: TestResultType, finishedTest: boolean, error?: Error)
+    {
+        if(result instanceof HTMLElement)
+        {
+            this.#setResult(testElement, result, finishedTest);
+        }
+        else if(result == undefined)
+        {
+            this.#setDefaultResult(testElement, finishedTest == true ? 'Passed' : `Failed${(error != null) ? `:\n${error.message}` : ''}`, finishedTest);
+        }
+        else if(typeof result == 'string')
+        {
+            this.#setDefaultResult(testElement, `${result}${error == null ? '' : `:\n${error.message}`}`, finishedTest);
+        }
+        else if(typeof result == 'object')
+        {
+            const objectResult = result as any;
+            if(objectResult.success != undefined
+            && objectResult.expected != undefined
+            && objectResult.value != undefined)
+            {
+                this.#setDefaultResult(testElement,
+                `${(objectResult.success == true) ?'Passed:' : 'Failed:'}\nExpected:${objectResult.expected}\nResult:${objectResult.value}`,
+                objectResult.success);
+            }
+        }
+
+        const detailsElement = testElement.querySelector('details');
+        if(detailsElement != null)
+        {
+            detailsElement.open = true;
+        }
+    }
+    async #runHook(testId: string, test: Test)
+    {
+        const testElement = this.getElement('tests').querySelector<HTMLElement>(`[data-test-id="${testId}"]`);
+        if(testElement == null)
+        {
+            this.#addProcessError(`Unable to find test element for test: ${testId}`);
+            return;
+        }
+        testElement.toggleAttribute('success', false);
+        testElement.classList.add('running');
+        
+        // clean up old test result
+        const errorMessageElement = testElement.querySelector(".error-message");
+        if(errorMessageElement != null)
+        {
+            errorMessageElement.textContent = "";
+        }
+        const detailsElement = testElement.querySelector('details');
+        if(detailsElement != null)
+        {
+            detailsElement.open = false;
+        }
+
+        // execute test
+        let beforeResult;
+        let testResult;
+        let afterResult;
+
+        try
+        {
+            const beforeHooks = this.#hooks.get(BEFOREEACH);
+            if(beforeHooks != null)
+            {
+                for(const [hook, ids] of beforeHooks)
+                {
+                    if(ids.has(testId))
+                    {
+                        beforeResult = await hook();
+                        break;
+                    }
+                }
+            }
+
+            testResult = await test();
+
+            const afterHooks = this.#hooks.get(AFTEREACH);
+            if(afterHooks != null)
+            {
+                for(const [hook, ids] of afterHooks)
+                {
+                    if(ids.has(testId))
+                    {
+                        afterResult = await hook();
+                        break;
+                    }
+                }
+            }
+
+            if(beforeResult != null)
+            {
+                this.#handleTestResult(testElement, beforeResult, true);
+            }
+
+            this.#handleTestResult(testElement, testResult, true);
+
+            if(afterResult != null)
+            {
+                this.#handleTestResult(testElement, afterResult, true);
+            }
+
+        }
+        catch(error)
+        {
+            this.#handleTestResult(testElement, testResult, false, error as Error);
+            console.error(error);
+        }
+        finally
+        {
+            testElement?.classList.remove('running');
+        }
+    }
+    #handleHookResult(testElement: HTMLElement, result: TestResultType, finishedTest: boolean, error?: Error)
+    {
+        if(result instanceof HTMLElement)
+        {
+            this.#setResult(testElement, result, finishedTest);
+        }
+        else if(result == undefined)
+        {
+            this.#setDefaultResult(testElement, finishedTest == true ? 'Passed' : `Failed${(error != null) ? `:\n${error.message}` : ''}`, finishedTest);
+        }
+        else if(typeof result == 'string')
+        {
+            this.#setDefaultResult(testElement, `${result}${error == null ? '' : `:\n${error.message}`}`, finishedTest);
+        }
+        else if(typeof result == 'object')
+        {
+            const objectResult = result as any;
+            if(objectResult.success != undefined
+            && objectResult.expected != undefined
+            && objectResult.value != undefined)
+            {
+                this.#setDefaultResult(testElement,
+                `${(objectResult.success == true) ?'Passed:' : 'Failed:'}\nExpected:${objectResult.expected}\nResult:${objectResult.value}`,
+                objectResult.success);
+            }
+        }
+
+        const detailsElement = testElement.querySelector('details');
+        if(detailsElement != null)
+        {
+            detailsElement.open = true;
         }
     }
 
@@ -334,11 +509,14 @@ export class CodeTestsElement extends HTMLElement
     #tests: Map<string, Test> = new Map();
     #addTest(description: string, test: Test)
     {
-        // integrate test
         const testId = generateId();
         this.#tests.set(testId, test);
-        
-        // create display
+        const testElement = this.#createTest(testId, description);
+        this.getElement('tests').append(testElement);
+        return testId;
+    }
+    #createTest(testId: string, description: string)
+    {
         const testElement = document.createElement('li');
         testElement.dataset.testId = testId;
         const detailsElement = document.createElement('details');
@@ -355,52 +533,70 @@ export class CodeTestsElement extends HTMLElement
         runButton.title = "Run Test";
         summaryElement.append(runButton);
 
-        const errorElement = document.createElement('div');
-        errorElement.classList.add("error");
-        
-        const codeElement = document.createElement('code');
-        const preElement = document.createElement('pre');
-        preElement.classList.add('error-message');
-        
-        codeElement.appendChild(preElement);
-
-        errorElement.appendChild(codeElement);
+        const resultElement = document.createElement('div');
+        resultElement.classList.add("result");
 
         detailsElement.append(summaryElement);
-        detailsElement.append(errorElement);
+        detailsElement.append(resultElement);
 
         testElement.append(detailsElement);
 
-        this.getElement('tests').append(testElement);
-
-        return testId;
+        return testElement;
     }
-    #setTestError(testElement: HTMLLIElement, message: string, error?: unknown)
+
+    #setResult(testElement: HTMLElement, valueElement: HTMLElement, success: boolean)
     {
-        if(error instanceof Error)
-        {
-            message += `\n${error.message}`;
-        }
-        
-        testElement.setAttribute('success', 'false');
+        testElement.setAttribute('success', success == true ? 'true' : 'false');
 
-        const errorMessageElement = testElement.querySelector(".error-message");
-        if(errorMessageElement != null)
+        const resultElement = testElement.querySelector(`.result`);
+        if(resultElement == null)
         {
-            errorMessageElement.textContent = message;
+            this.#addProcessError(`Unable to find result element`);
+            return;
         }
 
-        const detailsElement = testElement.querySelector('details');
-        if(detailsElement != null)
-        {
-            detailsElement.open = true;
-        }
+        resultElement.innerHTML = '';
+        resultElement.appendChild(valueElement);
     }
+    #setDefaultResult(testElement: HTMLElement, message: string, success: boolean)
+    {    
+        const codeElement = document.createElement('code');
+        const preElement = document.createElement('pre');
+        preElement.textContent = message;
+            preElement.classList.add((success == true)
+            ? 'success-message'
+            : 'error-message');
+        codeElement.appendChild(preElement);        
+        this.#setResult(testElement, codeElement, success);
+    }
+    // #setTestError(testElement: HTMLLIElement, message: string, error?: unknown)
+    // {
+    //     if(error instanceof Error)
+    //     {
+    //         message += `\n${error.message}`;
+    //     }
+        
+    //     testElement.setAttribute('success', 'false');
+
+    //     const errorMessageElement = testElement.querySelector(".error-message");
+    //     if(errorMessageElement != null)
+    //     {
+    //         errorMessageElement.textContent = message;
+    //     }
+
+    //     const detailsElement = testElement.querySelector('details');
+    //     if(detailsElement != null)
+    //     {
+    //         detailsElement.open = true;
+    //     }
+    // }
     #addProcessError(message: string, error?: unknown)
     {
         if(error instanceof Error)
         {
             message += `\n${error.message}`;
+
+            console.error(error);
         }
         
         const errorElement = document.createElement('li');
@@ -410,6 +606,58 @@ export class CodeTestsElement extends HTMLElement
         codeElement.append(preElement);
         errorElement.append(codeElement);
         this.getElement('tests').append(errorElement);
+    }
+
+    #updateListType(type: 'ordered'|'unordered')
+    {
+        if(type == 'ordered')
+        {
+            const list = this.shadowRoot!.querySelector<HTMLElement>('ul');
+            if(list == null) { return; }
+
+            const items = this.shadowRoot?.querySelectorAll<HTMLElement>('li');
+
+            const newList = document.createElement('ol');
+            if(items != null)
+            {
+                newList.append(...items);
+            }
+            newList.id = 'tests';
+
+            list.replaceWith(newList);
+        }
+        else
+        {
+            const list = this.shadowRoot!.querySelector<HTMLElement>('ol');
+            if(list == null) { return; }
+
+            const items = this.shadowRoot?.querySelectorAll<HTMLElement>('li');
+
+            const newList = document.createElement('ul');
+            newList.id = 'tests';
+            if(items != null)
+            {
+                newList.append(...items);
+            }
+
+            list.replaceWith(newList);
+        }
+    }
+
+    static observedAttributes = ['in-order'];
+    attributeChangedCallback(attributeName: string, oldValue: string, newValue: string)
+    {
+        if(attributeName == 'in-order')
+        {
+            if(newValue == undefined)
+            {
+                this.#updateListType('unordered');
+            }
+            else
+            {
+                this.#updateListType('ordered');
+            }
+        }
     }
 }
 /**

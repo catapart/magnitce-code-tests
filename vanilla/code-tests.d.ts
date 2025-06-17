@@ -27,6 +27,8 @@ declare class CodeTestsElement extends HTMLElement {
     loadTests(path: string): Promise<void>;
     runTests(): Promise<void>;
     static create(properties: CodeTestsProperties): HTMLElement;
+    static observedAttributes: string[];
+    attributeChangedCallback(attributeName: string, oldValue: string, newValue: string): void;
 }
 
 export { AFTERALL, AFTEREACH, BEFOREALL, BEFOREEACH, CodeTests, CodeTestsElement, type CodeTestsProperties, expect };

@@ -42,7 +42,9 @@ export class TestPromise<T> extends Promise<T>
         }
     }
 }
-export type Test = (...args: any[]) => void|Promise<void>;
+export type TestResult = { success: boolean, expected: any, value: any; };
+export type TestResultType = void|undefined|string|TestResult|HTMLElement;
+export type Test = <T extends TestResultType>(...args: any[]) => T|Promise<T>;
 export type Tests = { [key: string|symbol]: Test };
 export const BEFOREALL = Symbol("beforeAll");
 export const BEFOREEACH = Symbol("beforeEach");
