@@ -1,4 +1,4 @@
-import { AFTERALL, AFTEREACH, BEFOREALL, BEFOREEACH, expect } from '../../dist/code-tests.js';
+import { AFTERALL, AFTEREACH, BEFOREALL, BEFOREEACH, expect } from '../dist/code-tests.js';
 
 export default {
     [BEFOREALL]: async () =>

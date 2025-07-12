@@ -12,8 +12,9 @@
   "scripts": {
     "build": "tsup src/code-tests.ts --format cjs,esm --dts --clean",
     "minify": "tsup src/code-tests.ts --format esm --config ./tsup.config.min.ts --outDir ./dist --minify",
+    "copyToDemo": "node -e \"const fs = require('fs'); fs.cpSync('dist', 'demo/dist', {recursive: true});\"",
     "lint": "tsup src/code-tests.ts --format esm --tsconfig ./tsconfig.lint.json",
-    "package": "npm run build && npm run minify",
+    "package": "npm run build && npm run minify && npm run copyToDemo",
     "release": "npm run package && changeset publish"
   },
   "keywords": [

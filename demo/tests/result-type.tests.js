@@ -1,4 +1,4 @@
-import { expect } from '../../dist/code-tests.js';
+import { expect } from '../dist/code-tests.js';
 
 export default {
     'should allow undefined results': async () =>

@@ -1,5 +1,5 @@
 import { Library } from "../library.js"
-import { expect } from '../../dist/code-tests.js';
+import { expect } from '../dist/code-tests.js';
 
 // export default {
 //     'should add': async () =>
