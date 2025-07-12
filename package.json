@@ -11,11 +11,9 @@
   ],
   "scripts": {
     "build": "tsup src/code-tests.ts --format cjs,esm --dts --clean",
-    "build-vanilla": "tsup src/code-tests.ts --format esm --dts --clean --outDir ./vanilla",
-    "minify": "tsup src/code-tests.ts --format esm --config ./tsup.config.min.ts --outDir ./vanilla --minify",
+    "minify": "tsup src/code-tests.ts --format esm --config ./tsup.config.min.ts --outDir ./dist --minify",
     "lint": "tsup src/code-tests.ts --format esm --tsconfig ./tsconfig.lint.json",
-    "dev-pack": "npm run build-vanilla",
-    "package": "npm run build && npm run build-vanilla && npm run minify",
+    "package": "npm run build && npm run minify",
     "release": "npm run package && changeset publish"
   },
   "keywords": [
@@ -37,11 +35,10 @@
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.7",
+    "changesets": "^1.0.2",
     "minify": "^11.4.0",
     "terser": "^5.31.3",
     "tsup": "^8.2.0",
     "typescript": "^5.5.3"
-  },
-  "dependencies": {
   }
 }

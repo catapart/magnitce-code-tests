@@ -1,7 +1,7 @@
 # magnitce-code-tests
 A custom `HTMLElement` that runs tests in-browser and displays the results. 
 
-Package size: ~7kb minified, ~13kb verbose.
+Package size: ~24kb minified, ~36kb verbose.
 
 ## Quick Reference
 ```html
@@ -82,6 +82,8 @@ code-tests::part(header)
     /* styling */
 }
 ```
+
+## Parts
 
 ## License
 This library is in the public domain. You do not need permission, nor do you need to provide attribution, in order to use, modify, reproduce, publish, or sell it or any works using it or derived from it.

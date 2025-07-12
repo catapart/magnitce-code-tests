@@ -7,6 +7,8 @@ export type CodeTestsProperties =
     
 }
 
+const NOTESTDEFINED = Symbol('No Test Defined');
+
 const COMPONENT_STYLESHEET = new CSSStyleSheet();
 COMPONENT_STYLESHEET.replaceSync(style);
 
@@ -38,6 +40,8 @@ export class CodeTestsElement extends HTMLElement
         [AFTEREACH]: generateId(),
         [AFTERALL]: generateId(),
     }
+
+    #continueRunningTests: boolean = true;
 
     constructor()
     {
@@ -93,6 +97,9 @@ export class CodeTestsElement extends HTMLElement
 
     async loadTests(path: string)
     {
+        
+        this.classList.remove('has-before-hook');
+        this.classList.remove('has-after-hook');
         try
         {
             const lastSlashIndexInCurrentPath = window.location.href.lastIndexOf('/');
@@ -128,9 +135,8 @@ export class CodeTestsElement extends HTMLElement
                     map.set(beforeAll, new Set());
                     this.#hooks.set(BEFOREALL, map);
                 }
-                const element = this.#createTest(this.#hookIds[BEFOREALL], this.getAttribute('before-all-label') ?? "Before All:");
-                element.toggleAttribute('data-before-all', true);
-                this.getElement('tests').prepend(element);
+
+                this.classList.add('has-before-hook');
             }
             const beforeEach = tests[BEFOREEACH];
             if(beforeEach != null)
@@ -153,6 +159,7 @@ export class CodeTestsElement extends HTMLElement
                     map.set(afterAll, new Set());
                     this.#hooks.set(AFTERALL, map);
                 }
+                this.classList.add('has-after-hook');
             }
             const afterEach = tests[AFTEREACH];
             if(afterEach != null)
@@ -165,6 +172,9 @@ export class CodeTestsElement extends HTMLElement
                     this.#hooks.set(AFTEREACH, map);
                 }
             }
+
+            // cancel test
+            // after all hook doesn't reset on runTests start
 
             for(const [description, test] of Object.entries(tests))
             {
@@ -228,17 +238,40 @@ export class CodeTestsElement extends HTMLElement
 
     async runTests()
     {
+        this.#continueRunningTests = true;
         this.classList.add('running');
         this.toggleAttribute('success', false);
+
+        this.#clearTestStatuses();
 
         const inOrder = this.hasAttribute('in-order');
 
         const beforeHooks = this.#hooks.get(BEFOREALL);
         if(beforeHooks != null)
         {
-            for(const [hook, ids] of beforeHooks)
+            let hookResult;
+            try
             {
-                hook();
+                const hookElement = this.getElement(`before-all-details`);
+                hookElement.toggleAttribute('success', false);
+                hookElement.classList.add('running');
+                hookElement.part.add('running');
+                hookElement.classList.remove('success', 'fail');
+                hookElement.part.remove('success', 'fail');
+
+                for(const [hook, ids] of beforeHooks)
+                {
+                    hookResult = await hook();
+                    this.#handleHookResult(hookResult, true, 'before');
+                }
+                hookElement.part.remove('running');
+            }
+            catch(error)
+            {
+                this.#handleHookResult(hookResult, false, 'before', error as Error);
+                console.error(error);
+                this.#continueRunningTests = false;
+                return;
             }
         }
         if(inOrder == false)
@@ -254,21 +287,61 @@ export class CodeTestsElement extends HTMLElement
         {
             for(const [id, test] of this.#tests)
             {
+                //@ts-expect-error ts doesn't understand that runTest can change this value?
+                if(this.#continueRunningTests == false) { break; }
                 await this.#runTest(id, test)
             } 
         }
+        //@ts-expect-error ts doesn't understand that runTest can change this value?
+        if(this.#continueRunningTests == false) { return; }
         const afterHooks = this.#hooks.get(AFTERALL);
         if(afterHooks != null)
         {
-            for(const [hook, ids] of afterHooks)
+            let hookResult;
+            try
             {
-                hook();
+                const hookElement = this.getElement(`after-all-details`);
+                hookElement.toggleAttribute('success', false);
+                hookElement.classList.add('running');
+                hookElement.part.add('running');
+                hookElement.classList.remove('success', 'fail');
+                hookElement.part.remove('success', 'fail');
+
+                for(const [hook, ids] of afterHooks)
+                {
+                    hookResult = await hook();
+                    this.#handleHookResult(hookResult, true, 'after');
+                }
+                hookElement.part.remove('running');
+            }
+            catch(error)
+            {
+                this.#handleHookResult(hookResult, false, 'after', error as Error);
+                console.error(error);
+                this.#continueRunningTests = false;
+                return;
             }
         }
 
         const failedTests = this.shadowRoot!.querySelectorAll('[success="false"]');
         this.setAttribute('success', failedTests.length == 0 ? 'true' : 'false');
         this.classList.remove('running');
+    }
+    #clearTestStatuses()
+    {
+        for(const [testId, test] of this.#tests)
+        {
+            const testElement = this.getElement('tests').querySelector<HTMLElement>(`[data-test-id="${testId}"]`);
+            if(testElement == null)
+            {
+                this.#addProcessError(`Unable to find test element for test: ${testId}`);
+                return;
+            }
+            
+            testElement.toggleAttribute('success', false);
+            testElement.classList.remove('success', 'fail');
+            testElement.part.remove('success', 'fail');
+        } 
     }
     async #runTest(testId: string, test: Test)
     {
@@ -280,6 +353,9 @@ export class CodeTestsElement extends HTMLElement
         }
         testElement.toggleAttribute('success', false);
         testElement.classList.add('running');
+        testElement.part.add('running');
+        testElement.classList.remove('success', 'fail');
+        testElement.part.remove('success', 'fail');
         
         // clean up old test result
         const errorMessageElement = testElement.querySelector(".error-message");
@@ -294,10 +370,11 @@ export class CodeTestsElement extends HTMLElement
         }
 
         // execute test
-        let beforeResult;
+        let beforeResult: TestResultType|typeof NOTESTDEFINED = NOTESTDEFINED;
         let testResult;
-        let afterResult;
+        let afterResult: TestResultType|typeof NOTESTDEFINED = NOTESTDEFINED;
 
+        let testType: 'before'|'after'|undefined;
         try
         {
             const beforeHooks = this.#hooks.get(BEFOREEACH);
@@ -327,43 +404,50 @@ export class CodeTestsElement extends HTMLElement
                     }
                 }
             }
-
-            if(beforeResult != null)
+            
+            testType = 'before';
+            if(beforeResult != NOTESTDEFINED) // can't use undefined or null because those are valid result types
             {
-                this.#handleTestResult(testElement, beforeResult, true);
+                this.#handleTestResult(testElement, beforeResult, true, undefined, testType);
             }
 
-            this.#handleTestResult(testElement, testResult, true);
+            testType = undefined;
+            this.#handleTestResult(testElement, testResult, true, undefined, testType);
 
-            if(afterResult != null)
+            testType = 'after';
+            if(afterResult != NOTESTDEFINED) // can't use undefined or null because those are valid result types
             {
-                this.#handleTestResult(testElement, afterResult, true);
+                this.#handleTestResult(testElement, afterResult, true, undefined, testType);
             }
 
         }
         catch(error)
         {
-            this.#handleTestResult(testElement, testResult, false, error as Error);
+            this.#handleTestResult(testElement, testResult, false, error as Error, testType);
             console.error(error);
+            this.#continueRunningTests = false;
         }
         finally
         {
             testElement?.classList.remove('running');
         }
     }
-    #handleTestResult(testElement: HTMLElement, result: TestResultType, finishedTest: boolean, error?: Error)
+    #handleTestResult(testElement: HTMLElement, result: TestResultType, finishedTest: boolean, error?: Error, beforeOrAfter?: 'before'|'after')
     {
         if(result instanceof HTMLElement)
         {
-            this.#setResult(testElement, result, finishedTest);
+            this.#setTestResult(testElement, result, finishedTest, beforeOrAfter);
         }
         else if(result == undefined)
         {
-            this.#setDefaultResult(testElement, finishedTest == true ? 'Passed' : `Failed${(error != null) ? `:\n${error.message}` : ''}`, finishedTest);
+            const trueMessage = (beforeOrAfter == undefined) ? 'Passed' : 'Hook Ran Successfully';
+            const defaultResult = this.#createDefaultResult(finishedTest == true ? `${trueMessage}` : `Failed${(error != null) ? `:\n${error.message}` : ''}`, finishedTest, beforeOrAfter);
+            this.#setTestResult(testElement, defaultResult, finishedTest, beforeOrAfter);
         }
         else if(typeof result == 'string')
         {
-            this.#setDefaultResult(testElement, `${result}${error == null ? '' : `:\n${error.message}`}`, finishedTest);
+            const defaultResult = this.#createDefaultResult(`${result}${error == null ? '' : `:\n${error.message}`}`, finishedTest, beforeOrAfter);
+            this.#setTestResult(testElement, defaultResult, finishedTest, beforeOrAfter);
         }
         else if(typeof result == 'object')
         {
@@ -372,9 +456,13 @@ export class CodeTestsElement extends HTMLElement
             && objectResult.expected != undefined
             && objectResult.value != undefined)
             {
-                this.#setDefaultResult(testElement,
-                `${(objectResult.success == true) ?'Passed:' : 'Failed:'}\nExpected:${objectResult.expected}\nResult:${objectResult.value}`,
-                objectResult.success);
+                const trueMessage = (beforeOrAfter == undefined) ? 'Passed' : 'Success';
+                const falseMessage = (beforeOrAfter == undefined) ? 'Failed' : 'Fail';
+                const defaultResult = this.#createDefaultResult(
+                `${(objectResult.success == true) ? `${trueMessage}:` : `${falseMessage}:`}\nExpected:${objectResult.expected}\nResult:${objectResult.value}`,
+                objectResult.success,
+                beforeOrAfter);
+                this.#setTestResult(testElement, defaultResult, finishedTest, beforeOrAfter);
             }
         }
 
@@ -384,115 +472,42 @@ export class CodeTestsElement extends HTMLElement
             detailsElement.open = true;
         }
     }
-    async #runHook(testId: string, test: Test)
-    {
-        const testElement = this.getElement('tests').querySelector<HTMLElement>(`[data-test-id="${testId}"]`);
-        if(testElement == null)
-        {
-            this.#addProcessError(`Unable to find test element for test: ${testId}`);
-            return;
-        }
-        testElement.toggleAttribute('success', false);
-        testElement.classList.add('running');
-        
-        // clean up old test result
-        const errorMessageElement = testElement.querySelector(".error-message");
-        if(errorMessageElement != null)
-        {
-            errorMessageElement.textContent = "";
-        }
-        const detailsElement = testElement.querySelector('details');
-        if(detailsElement != null)
-        {
-            detailsElement.open = false;
-        }
-
-        // execute test
-        let beforeResult;
-        let testResult;
-        let afterResult;
-
-        try
-        {
-            const beforeHooks = this.#hooks.get(BEFOREEACH);
-            if(beforeHooks != null)
-            {
-                for(const [hook, ids] of beforeHooks)
-                {
-                    if(ids.has(testId))
-                    {
-                        beforeResult = await hook();
-                        break;
-                    }
-                }
-            }
-
-            testResult = await test();
-
-            const afterHooks = this.#hooks.get(AFTEREACH);
-            if(afterHooks != null)
-            {
-                for(const [hook, ids] of afterHooks)
-                {
-                    if(ids.has(testId))
-                    {
-                        afterResult = await hook();
-                        break;
-                    }
-                }
-            }
-
-            if(beforeResult != null)
-            {
-                this.#handleTestResult(testElement, beforeResult, true);
-            }
-
-            this.#handleTestResult(testElement, testResult, true);
-
-            if(afterResult != null)
-            {
-                this.#handleTestResult(testElement, afterResult, true);
-            }
-
-        }
-        catch(error)
-        {
-            this.#handleTestResult(testElement, testResult, false, error as Error);
-            console.error(error);
-        }
-        finally
-        {
-            testElement?.classList.remove('running');
-        }
-    }
-    #handleHookResult(testElement: HTMLElement, result: TestResultType, finishedTest: boolean, error?: Error)
+    #handleHookResult(result: TestResultType, finishedTest: boolean, beforeOrAfter: 'before'|'after', error?: Error)
     {
         if(result instanceof HTMLElement)
         {
-            this.#setResult(testElement, result, finishedTest);
+            this.#setHookResult(result, finishedTest, beforeOrAfter);
         }
-        else if(result == undefined)
+        else 
         {
-            this.#setDefaultResult(testElement, finishedTest == true ? 'Passed' : `Failed${(error != null) ? `:\n${error.message}` : ''}`, finishedTest);
-        }
-        else if(typeof result == 'string')
-        {
-            this.#setDefaultResult(testElement, `${result}${error == null ? '' : `:\n${error.message}`}`, finishedTest);
-        }
-        else if(typeof result == 'object')
-        {
-            const objectResult = result as any;
-            if(objectResult.success != undefined
-            && objectResult.expected != undefined
-            && objectResult.value != undefined)
+            let defaultResult: HTMLElement;
+            if(result == undefined)
             {
-                this.#setDefaultResult(testElement,
-                `${(objectResult.success == true) ?'Passed:' : 'Failed:'}\nExpected:${objectResult.expected}\nResult:${objectResult.value}`,
-                objectResult.success);
+                defaultResult = this.#createDefaultResult(finishedTest == true ? 'Hook Ran Successfully' : `Failed${(error != null) ? `:\n${error.message}` : ''}`, finishedTest);
+                this.#setHookResult(defaultResult, finishedTest, beforeOrAfter);
+            }
+            else if(typeof result == 'string')
+            {
+                defaultResult = this.#createDefaultResult(`${result}${error == null ? '' : `:\n${error.message}`}`, finishedTest);
+                this.#setHookResult(defaultResult, finishedTest, beforeOrAfter);
+            }
+            else if(typeof result == 'object')
+            {
+                const objectResult = result as any;
+                if(objectResult.success != undefined
+                && objectResult.expected != undefined
+                && objectResult.value != undefined)
+                {
+                    defaultResult = this.#createDefaultResult(
+                        `${(objectResult.success == true) ?'Success:' : 'Fail:'}\nExpected:${objectResult.expected}\nResult:${objectResult.value}`,
+                        objectResult.success
+                    );
+                    this.#setHookResult(defaultResult, finishedTest, beforeOrAfter);
+                }
             }
         }
 
-        const detailsElement = testElement.querySelector('details');
+        const detailsElement = this.getElement<HTMLDetailsElement>(`${beforeOrAfter}-all-details`);
         if(detailsElement != null)
         {
             detailsElement.open = true;
@@ -519,36 +534,57 @@ export class CodeTestsElement extends HTMLElement
     {
         const testElement = document.createElement('li');
         testElement.dataset.testId = testId;
+        testElement.classList.add('test');
         const detailsElement = document.createElement('details');
+        detailsElement.classList.add('test-details');
         const summaryElement = document.createElement('summary');
+        summaryElement.classList.add('test-summary');
+
+        const resultIcon = document.createElement('div');
+        resultIcon.classList.add('result-icon');
+        summaryElement.append(resultIcon);
         
         const descriptionElement = document.createElement('span');
-        descriptionElement.classList.add('description');
+        descriptionElement.classList.add('description', 'test-description');
         descriptionElement.textContent = description;
         summaryElement.append(descriptionElement);
 
         const runButton = document.createElement('button');
-        runButton.classList.add('run');
-        runButton.textContent = '⏵';
+        runButton.classList.add('run', 'test-run');
+        runButton.textContent = 'Run Test';
         runButton.title = "Run Test";
         summaryElement.append(runButton);
 
+        const beforeResultElement = document.createElement('div');
+        beforeResultElement.classList.add("before-result", 'test-before-result');
         const resultElement = document.createElement('div');
-        resultElement.classList.add("result");
+        resultElement.classList.add("result", 'test-result');
+        const afterResultElement = document.createElement('div');
+        afterResultElement.classList.add("after-result", 'test-after-result');
 
         detailsElement.append(summaryElement);
+        detailsElement.append(beforeResultElement);
         detailsElement.append(resultElement);
+        detailsElement.append(afterResultElement);
 
         testElement.append(detailsElement);
 
         return testElement;
     }
 
-    #setResult(testElement: HTMLElement, valueElement: HTMLElement, success: boolean)
+    #setTestResult(testElement: HTMLElement, valueElement: HTMLElement, success: boolean, beforeOrAfter?: 'before'|'after')
     {
         testElement.setAttribute('success', success == true ? 'true' : 'false');
+        testElement.classList.toggle('success', success);
+        testElement.part.toggle('success', success);
+        testElement.classList.toggle('fail', !success);
+        testElement.part.toggle('fail', !success);
 
-        const resultElement = testElement.querySelector(`.result`);
+        const resultElement = testElement.querySelector(`.${beforeOrAfter == undefined
+        ? 'result'
+        : beforeOrAfter == 'before'
+        ? 'before-result'
+        : 'after-result'}`);
         if(resultElement == null)
         {
             this.#addProcessError(`Unable to find result element`);
@@ -558,7 +594,7 @@ export class CodeTestsElement extends HTMLElement
         resultElement.innerHTML = '';
         resultElement.appendChild(valueElement);
     }
-    #setDefaultResult(testElement: HTMLElement, message: string, success: boolean)
+    #createDefaultResult(message: string, success: boolean, beforeOrAfter?: 'before'|'after')
     {    
         const codeElement = document.createElement('code');
         const preElement = document.createElement('pre');
@@ -566,30 +602,22 @@ export class CodeTestsElement extends HTMLElement
             preElement.classList.add((success == true)
             ? 'success-message'
             : 'error-message');
-        codeElement.appendChild(preElement);        
-        this.#setResult(testElement, codeElement, success);
+        codeElement.appendChild(preElement);
+        return codeElement;
     }
-    // #setTestError(testElement: HTMLLIElement, message: string, error?: unknown)
-    // {
-    //     if(error instanceof Error)
-    //     {
-    //         message += `\n${error.message}`;
-    //     }
-        
-    //     testElement.setAttribute('success', 'false');
+    #setHookResult(valueElement: HTMLElement, success: boolean, beforeOrAfter: 'before'|'after')
+    {
+        const detailsElement = this.getElement(`${beforeOrAfter}-all-details`);
+        const resultsElement = this.getElement(`${beforeOrAfter}-all-results`);
+        detailsElement.setAttribute('success', success == true ? 'true' : 'false');
+        detailsElement.classList.toggle('success', success);
+        detailsElement.part.toggle('success', success);
+        detailsElement.classList.toggle('fail', !success);
+        detailsElement.part.toggle('fail', !success);
 
-    //     const errorMessageElement = testElement.querySelector(".error-message");
-    //     if(errorMessageElement != null)
-    //     {
-    //         errorMessageElement.textContent = message;
-    //     }
-
-    //     const detailsElement = testElement.querySelector('details');
-    //     if(detailsElement != null)
-    //     {
-    //         detailsElement.open = true;
-    //     }
-    // }
+        resultsElement.innerHTML = '';
+        resultsElement.appendChild(valueElement);
+    }
     #addProcessError(message: string, error?: unknown)
     {
         if(error instanceof Error)

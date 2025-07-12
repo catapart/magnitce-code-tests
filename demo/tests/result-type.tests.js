@@ -1,4 +1,4 @@
-import { expect } from '../../vanilla/code-tests.js';
+import { expect } from '../../dist/code-tests.js';
 
 export default {
     'should allow undefined results': async () =>
@@ -11,7 +11,7 @@ export default {
     },
     'should allow TestResult results': async () =>
     {
-        return { success: true, expected: "TestResult", value: "TestResult" };
+        return { success: true, expected: "TestResult", value: 'A different TestResult' };
     },
     'should allow HTMLElement results': async () =>
     {

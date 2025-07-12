@@ -1,5 +1,5 @@
 import { Library } from "../library.js"
-import { expect } from '../../vanilla/code-tests.js';
+import { expect } from '../../dist/code-tests.js';
 
 // export default {
 //     'should add': async () =>
@@ -22,7 +22,7 @@ export const tests = {
         const result = library.accessDelayedTarget(); // this should be awaited, but expect will await it for you.
         await expect(result).toBe("Delayed");
     },
-    'should subtract': async () =>
+    "should subtract (but doesn't, to demonstrate a default failure)": async () =>
     {
         const library = new Library();
         const result = library.add(5, 7);
