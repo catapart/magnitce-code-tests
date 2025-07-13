@@ -7,6 +7,10 @@ settings:
 importers:
 
   .:
+    dependencies:
+      ce-part-utils:
+        specifier: ^0.0.0
+        version: 0.0.0
     devDependencies:
       '@changesets/cli':
         specifier: ^2.27.7
@@ -678,6 +682,9 @@ packages:
 
   camel-case@4.1.2:
     resolution: {integrity: sha512-gxGWBrTT1JuMx6R+o5PTXMmUnhnVzLQ9SNutD4YqKtI6ap897t3tKECYla6gCWEkplXnlNybEkZg9GEGxKFCgw==}
+
+  ce-part-utils@0.0.0:
+    resolution: {integrity: sha512-Q4oCUgZcBgXw82aNd3UD0vErBlCSgl/QhoqARM/UN7v/7inPeWtwzqYZs2ItgnGdGOeN023PlygEBsPZ0MxGoQ==}
 
   changesets@1.0.2:
     resolution: {integrity: sha512-lnXvvqJEcK0z/6RtwKNLbejazl+Hxd1bocMcNgfLHWb4rGxuqkO/LdeGNzwIx3jHj+fNWZ6AGgK5AqNBwva4Xg==}
@@ -1846,6 +1853,8 @@ snapshots:
     dependencies:
       pascal-case: 3.1.2
       tslib: 2.8.1
+
+  ce-part-utils@0.0.0: {}
 
   changesets@1.0.2: {}
 

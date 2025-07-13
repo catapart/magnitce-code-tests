@@ -437,6 +437,19 @@ function expect(value) {
   return CodeTests.expect(value);
 }
 
+// node_modules/.pnpm/ce-part-utils@0.0.0/node_modules/ce-part-utils/dist/ce-part-utils.js
+var DEFAULT_ELEMENT_SELECTOR = ":not(slot,defs,g,rect,path,circle,ellipse,line,polygon,text,tspan,use,svg image,svg title,desc,template,template *)";
+function assignClassAndIdToPart(shadowRoot) {
+  const identifiedElements = [...shadowRoot.querySelectorAll(`${DEFAULT_ELEMENT_SELECTOR}[id]`)];
+  for (let i = 0; i < identifiedElements.length; i++) {
+    identifiedElements[i].part.add(identifiedElements[i].id);
+  }
+  const classedElements = [...shadowRoot.querySelectorAll(`${DEFAULT_ELEMENT_SELECTOR}[class]`)];
+  for (let i = 0; i < classedElements.length; i++) {
+    classedElements[i].part.add(...classedElements[i].classList);
+  }
+}
+
 // src/code-tests.ts
 var NOTESTDEFINED = Symbol("No Test Defined");
 var COMPONENT_STYLESHEET = new CSSStyleSheet();
@@ -478,6 +491,7 @@ var CodeTestsElement = class extends HTMLElement {
       return;
     }
     this.loadTests(testsPath);
+    assignClassAndIdToPart(this.shadowRoot);
   }
   disconnectedCallback() {
     this.removeEventListener("click", this.#boundClickHandler);
@@ -615,17 +629,15 @@ var CodeTestsElement = class extends HTMLElement {
     if (beforeHooks != null) {
       let hookResult;
       try {
-        const hookElement = this.getElement(`before-all-details`);
-        hookElement.toggleAttribute("success", false);
-        hookElement.classList.add("running");
-        hookElement.part.add("running");
-        hookElement.classList.remove("success", "fail");
-        hookElement.part.remove("success", "fail");
+        const beforeAllHookElement = this.getElement(`before-all-details`);
+        beforeAllHookElement.classList.add("running");
+        beforeAllHookElement.part.add("running");
         for (const [hook, ids] of beforeHooks) {
           hookResult = await hook();
           this.#handleHookResult(hookResult, true, "before");
         }
-        hookElement.part.remove("running");
+        beforeAllHookElement.part.remove("running");
+        beforeAllHookElement.classList.remove("running");
       } catch (error) {
         this.#handleHookResult(hookResult, false, "before", error);
         console.error(error);
@@ -654,17 +666,15 @@ var CodeTestsElement = class extends HTMLElement {
     if (afterHooks != null) {
       let hookResult;
       try {
-        const hookElement = this.getElement(`after-all-details`);
-        hookElement.toggleAttribute("success", false);
-        hookElement.classList.add("running");
-        hookElement.part.add("running");
-        hookElement.classList.remove("success", "fail");
-        hookElement.part.remove("success", "fail");
+        const afterAllHookElement = this.getElement(`after-all-details`);
+        afterAllHookElement.classList.add("running");
+        afterAllHookElement.part.add("running");
         for (const [hook, ids] of afterHooks) {
           hookResult = await hook();
           this.#handleHookResult(hookResult, true, "after");
         }
-        hookElement.part.remove("running");
+        afterAllHookElement.part.remove("running");
+        afterAllHookElement.classList.remove("running");
       } catch (error) {
         this.#handleHookResult(hookResult, false, "after", error);
         console.error(error);
@@ -675,6 +685,7 @@ var CodeTestsElement = class extends HTMLElement {
     const failedTests = this.shadowRoot.querySelectorAll('[success="false"]');
     this.setAttribute("success", failedTests.length == 0 ? "true" : "false");
     this.classList.remove("running");
+    this.part.remove("running");
   }
   #clearTestStatuses() {
     for (const [testId, test] of this.#tests) {
@@ -687,6 +698,14 @@ var CodeTestsElement = class extends HTMLElement {
       testElement.classList.remove("success", "fail");
       testElement.part.remove("success", "fail");
     }
+    const beforeAllHookElement = this.getElement(`before-all-details`);
+    beforeAllHookElement.toggleAttribute("success", false);
+    beforeAllHookElement.classList.remove("success", "fail");
+    beforeAllHookElement.part.remove("success", "fail");
+    const afterAllHookElement = this.getElement(`after-all-details`);
+    afterAllHookElement.toggleAttribute("success", false);
+    afterAllHookElement.classList.remove("success", "fail");
+    afterAllHookElement.part.remove("success", "fail");
   }
   async #runTest(testId, test) {
     const testElement = this.getElement("tests").querySelector(`[data-test-id="${testId}"]`);
@@ -747,6 +766,7 @@ var CodeTestsElement = class extends HTMLElement {
       this.#continueRunningTests = false;
     } finally {
       testElement?.classList.remove("running");
+      testElement?.part.remove("running");
     }
   }
   #handleTestResult(testElement, result, finishedTest, error, beforeOrAfter) {
@@ -829,12 +849,16 @@ Result:${objectResult.value}`,
     const testElement = document.createElement("li");
     testElement.dataset.testId = testId;
     testElement.classList.add("test");
+    testElement.part.add("test");
     const detailsElement = document.createElement("details");
     detailsElement.classList.add("test-details");
+    detailsElement.part.add("test-details");
     const summaryElement = document.createElement("summary");
     summaryElement.classList.add("test-summary");
+    summaryElement.part.add("test-summary");
     const resultIcon = document.createElement("div");
     resultIcon.classList.add("result-icon");
+    resultIcon.part.add("result-icon");
     summaryElement.append(resultIcon);
     const descriptionElement = document.createElement("span");
     descriptionElement.classList.add("description", "test-description");
@@ -842,15 +866,19 @@ Result:${objectResult.value}`,
     summaryElement.append(descriptionElement);
     const runButton = document.createElement("button");
     runButton.classList.add("run", "test-run");
+    runButton.part.add("run", "test-run");
     runButton.textContent = "Run Test";
     runButton.title = "Run Test";
     summaryElement.append(runButton);
     const beforeResultElement = document.createElement("div");
     beforeResultElement.classList.add("before-result", "test-before-result");
+    beforeResultElement.part.add("before-result", "test-before-result");
     const resultElement = document.createElement("div");
     resultElement.classList.add("result", "test-result");
+    resultElement.part.add("result", "test-result");
     const afterResultElement = document.createElement("div");
     afterResultElement.classList.add("after-result", "test-after-result");
+    afterResultElement.part.add("after-result", "test-after-result");
     detailsElement.append(summaryElement);
     detailsElement.append(beforeResultElement);
     detailsElement.append(resultElement);
@@ -874,9 +902,13 @@ Result:${objectResult.value}`,
   }
   #createDefaultResult(message, success, beforeOrAfter) {
     const codeElement = document.createElement("code");
+    codeElement.classList.add("code");
+    codeElement.part.add("code");
     const preElement = document.createElement("pre");
     preElement.textContent = message;
-    preElement.classList.add(success == true ? "success-message" : "error-message");
+    const className = success == true ? "success-message" : "error-message";
+    preElement.classList.add("pre", className);
+    preElement.part.add("pre", className);
     codeElement.appendChild(preElement);
     return codeElement;
   }
@@ -898,8 +930,14 @@ ${error.message}`;
       console.error(error);
     }
     const errorElement = document.createElement("li");
+    errorElement.classList.add("error", "process-error");
+    errorElement.part.add("error", "process-error");
     const codeElement = document.createElement("code");
+    codeElement.classList.add("code", "process-error-code");
+    codeElement.part.add("code", "process-error-code");
     const preElement = document.createElement("pre");
+    preElement.classList.add("pre", "process-error-pre");
+    preElement.part.add("pre", "process-error-pre");
     preElement.textContent = message;
     codeElement.append(preElement);
     errorElement.append(codeElement);

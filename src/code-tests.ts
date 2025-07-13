@@ -1,6 +1,7 @@
 import { default as style } from './code-tests.css?raw';
 import { default as html } from './code-tests.html?raw';
 import { AFTERALL, AFTEREACH, BEFOREALL, BEFOREEACH, CodeTests, expect, Test, TestResultType, Tests } from './api';
+import { assignClassAndIdToPart } from 'ce-part-utils';
 
 export type CodeTestsProperties = 
 {
@@ -65,6 +66,8 @@ export class CodeTestsElement extends HTMLElement
         if(testsPath == null) { return; }
 
         this.loadTests(testsPath);
+
+        assignClassAndIdToPart(this.shadowRoot!);
     }
     disconnectedCallback()
     {
@@ -252,19 +255,16 @@ export class CodeTestsElement extends HTMLElement
             let hookResult;
             try
             {
-                const hookElement = this.getElement(`before-all-details`);
-                hookElement.toggleAttribute('success', false);
-                hookElement.classList.add('running');
-                hookElement.part.add('running');
-                hookElement.classList.remove('success', 'fail');
-                hookElement.part.remove('success', 'fail');
-
+                const beforeAllHookElement = this.getElement(`before-all-details`);
+                beforeAllHookElement.classList.add('running');
+                beforeAllHookElement.part.add('running');
                 for(const [hook, ids] of beforeHooks)
                 {
                     hookResult = await hook();
                     this.#handleHookResult(hookResult, true, 'before');
                 }
-                hookElement.part.remove('running');
+                beforeAllHookElement.part.remove('running');
+                beforeAllHookElement.classList.remove('running');
             }
             catch(error)
             {
@@ -300,19 +300,16 @@ export class CodeTestsElement extends HTMLElement
             let hookResult;
             try
             {
-                const hookElement = this.getElement(`after-all-details`);
-                hookElement.toggleAttribute('success', false);
-                hookElement.classList.add('running');
-                hookElement.part.add('running');
-                hookElement.classList.remove('success', 'fail');
-                hookElement.part.remove('success', 'fail');
-
+                const afterAllHookElement = this.getElement(`after-all-details`);
+                afterAllHookElement.classList.add('running');
+                afterAllHookElement.part.add('running');
                 for(const [hook, ids] of afterHooks)
                 {
                     hookResult = await hook();
                     this.#handleHookResult(hookResult, true, 'after');
                 }
-                hookElement.part.remove('running');
+                afterAllHookElement.part.remove('running');
+                afterAllHookElement.classList.remove('running');
             }
             catch(error)
             {
@@ -326,6 +323,7 @@ export class CodeTestsElement extends HTMLElement
         const failedTests = this.shadowRoot!.querySelectorAll('[success="false"]');
         this.setAttribute('success', failedTests.length == 0 ? 'true' : 'false');
         this.classList.remove('running');
+        this.part.remove('running');
     }
     #clearTestStatuses()
     {
@@ -342,6 +340,16 @@ export class CodeTestsElement extends HTMLElement
             testElement.classList.remove('success', 'fail');
             testElement.part.remove('success', 'fail');
         } 
+
+        const beforeAllHookElement = this.getElement(`before-all-details`);
+        beforeAllHookElement.toggleAttribute('success', false);
+        beforeAllHookElement.classList.remove('success', 'fail');
+        beforeAllHookElement.part.remove('success', 'fail');
+        
+        const afterAllHookElement = this.getElement(`after-all-details`);
+        afterAllHookElement.toggleAttribute('success', false);
+        afterAllHookElement.classList.remove('success', 'fail');
+        afterAllHookElement.part.remove('success', 'fail');
     }
     async #runTest(testId: string, test: Test)
     {
@@ -430,6 +438,7 @@ export class CodeTestsElement extends HTMLElement
         finally
         {
             testElement?.classList.remove('running');
+            testElement?.part.remove('running');
         }
     }
     #handleTestResult(testElement: HTMLElement, result: TestResultType, finishedTest: boolean, error?: Error, beforeOrAfter?: 'before'|'after')
@@ -535,13 +544,17 @@ export class CodeTestsElement extends HTMLElement
         const testElement = document.createElement('li');
         testElement.dataset.testId = testId;
         testElement.classList.add('test');
+        testElement.part.add('test');
         const detailsElement = document.createElement('details');
         detailsElement.classList.add('test-details');
+        detailsElement.part.add('test-details');
         const summaryElement = document.createElement('summary');
         summaryElement.classList.add('test-summary');
+        summaryElement.part.add('test-summary');
 
         const resultIcon = document.createElement('div');
         resultIcon.classList.add('result-icon');
+        resultIcon.part.add('result-icon');
         summaryElement.append(resultIcon);
         
         const descriptionElement = document.createElement('span');
@@ -551,16 +564,20 @@ export class CodeTestsElement extends HTMLElement
 
         const runButton = document.createElement('button');
         runButton.classList.add('run', 'test-run');
+        runButton.part.add('run', 'test-run');
         runButton.textContent = 'Run Test';
         runButton.title = "Run Test";
         summaryElement.append(runButton);
 
         const beforeResultElement = document.createElement('div');
         beforeResultElement.classList.add("before-result", 'test-before-result');
+        beforeResultElement.part.add("before-result", 'test-before-result');
         const resultElement = document.createElement('div');
         resultElement.classList.add("result", 'test-result');
+        resultElement.part.add("result", 'test-result');
         const afterResultElement = document.createElement('div');
         afterResultElement.classList.add("after-result", 'test-after-result');
+        afterResultElement.part.add("after-result", 'test-after-result');
 
         detailsElement.append(summaryElement);
         detailsElement.append(beforeResultElement);
@@ -597,11 +614,15 @@ export class CodeTestsElement extends HTMLElement
     #createDefaultResult(message: string, success: boolean, beforeOrAfter?: 'before'|'after')
     {    
         const codeElement = document.createElement('code');
+        codeElement.classList.add('code');
+        codeElement.part.add('code');
         const preElement = document.createElement('pre');
         preElement.textContent = message;
-            preElement.classList.add((success == true)
-            ? 'success-message'
-            : 'error-message');
+        const className = (success == true)
+        ? 'success-message'
+        : 'error-message';
+        preElement.classList.add('pre', className);
+        preElement.part.add('pre', className);
         codeElement.appendChild(preElement);
         return codeElement;
     }
@@ -628,8 +649,14 @@ export class CodeTestsElement extends HTMLElement
         }
         
         const errorElement = document.createElement('li');
+        errorElement.classList.add('error', 'process-error');
+        errorElement.part.add('error', 'process-error');
         const codeElement = document.createElement('code');
+        codeElement.classList.add('code', 'process-error-code');
+        codeElement.part.add('code', 'process-error-code');
         const preElement = document.createElement('pre');
+        preElement.classList.add('pre', 'process-error-pre');
+        preElement.part.add('pre', 'process-error-pre');
         preElement.textContent = message;
         codeElement.append(preElement);
         errorElement.append(codeElement);
