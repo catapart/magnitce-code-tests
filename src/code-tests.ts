@@ -8,6 +8,14 @@ export type CodeTestsProperties =
     
 }
 
+export enum CodeTestEventType
+{
+    BeforeAll = 'beforeall',
+    AfterAll = 'afterall',
+    BeforeTest = 'beforetest',
+    AfterTest = 'aftertest',
+}
+
 const NOTESTDEFINED = Symbol('No Test Defined');
 
 const COMPONENT_STYLESHEET = new CSSStyleSheet();
@@ -53,7 +61,7 @@ export class CodeTestsElement extends HTMLElement
 
         this.#boundClickHandler = this.#onClick.bind(this);
     }
-
+    
     connectedCallback()
     {
         this.addEventListener('click', this.#boundClickHandler)
@@ -98,13 +106,17 @@ export class CodeTestsElement extends HTMLElement
         this.#runTest(testId, test);
     }
 
+
     async loadTests(path: string)
     {
         
-        this.classList.remove('has-before-hook');
-        this.classList.remove('has-after-hook');
         try
         {
+            this.getElement('tests').innerHTML = '';
+            this.#tests.clear();
+            this.classList.remove('has-before-hook');
+            this.classList.remove('has-after-hook');
+
             const lastSlashIndexInCurrentPath = window.location.href.lastIndexOf('/');
             const currentPathHasExtension = window.location.href.substring(lastSlashIndexInCurrentPath).indexOf('.') != -1;
             const currentPath = (currentPathHasExtension == true)
@@ -241,6 +253,7 @@ export class CodeTestsElement extends HTMLElement
 
     async runTests()
     {
+        this.dispatchEvent(new CustomEvent(CodeTestEventType.BeforeAll, { bubbles: true, composed: true }));
         this.#continueRunningTests = true;
         this.classList.add('running');
         this.toggleAttribute('success', false);
@@ -324,6 +337,7 @@ export class CodeTestsElement extends HTMLElement
         this.setAttribute('success', failedTests.length == 0 ? 'true' : 'false');
         this.classList.remove('running');
         this.part.remove('running');
+        this.dispatchEvent(new CustomEvent(CodeTestEventType.AfterAll, { bubbles: true, composed: true }));
     }
     #clearTestStatuses()
     {
@@ -364,6 +378,12 @@ export class CodeTestsElement extends HTMLElement
         testElement.part.add('running');
         testElement.classList.remove('success', 'fail');
         testElement.part.remove('success', 'fail');
+
+        const iconElement = testElement.querySelector('.result-icon');
+        iconElement?.classList.remove('success', 'fail');
+        iconElement?.part.remove('success', 'fail');
+        iconElement?.classList.add('running');
+        iconElement?.part.add('running');
         
         // clean up old test result
         const errorMessageElement = testElement.querySelector(".error-message");
@@ -376,6 +396,7 @@ export class CodeTestsElement extends HTMLElement
         {
             detailsElement.open = false;
         }
+        
 
         // execute test
         let beforeResult: TestResultType|typeof NOTESTDEFINED = NOTESTDEFINED;
@@ -385,47 +406,52 @@ export class CodeTestsElement extends HTMLElement
         let testType: 'before'|'after'|undefined;
         try
         {
-            const beforeHooks = this.#hooks.get(BEFOREEACH);
-            if(beforeHooks != null)
+            const allowTest = this.dispatchEvent(new CustomEvent(CodeTestEventType.BeforeTest, { bubbles: true, cancelable: true, composed: true, detail: { testElement } }));
+
+            if(allowTest == true)
             {
-                for(const [hook, ids] of beforeHooks)
+                const beforeHooks = this.#hooks.get(BEFOREEACH);
+                if(beforeHooks != null)
                 {
-                    if(ids.has(testId))
+                    for(const [hook, ids] of beforeHooks)
                     {
-                        beforeResult = await hook();
-                        break;
+                        if(ids.has(testId))
+                        {
+                            beforeResult = await hook();
+                            break;
+                        }
                     }
                 }
-            }
 
-            testResult = await test();
+                testResult = await test();
 
-            const afterHooks = this.#hooks.get(AFTEREACH);
-            if(afterHooks != null)
-            {
-                for(const [hook, ids] of afterHooks)
+                const afterHooks = this.#hooks.get(AFTEREACH);
+                if(afterHooks != null)
                 {
-                    if(ids.has(testId))
+                    for(const [hook, ids] of afterHooks)
                     {
-                        afterResult = await hook();
-                        break;
+                        if(ids.has(testId))
+                        {
+                            afterResult = await hook();
+                            break;
+                        }
                     }
                 }
-            }
-            
-            testType = 'before';
-            if(beforeResult != NOTESTDEFINED) // can't use undefined or null because those are valid result types
-            {
-                this.#handleTestResult(testElement, beforeResult, true, undefined, testType);
-            }
+                
+                testType = 'before';
+                if(beforeResult != NOTESTDEFINED) // can't use undefined or null because those are valid result types
+                {
+                    this.#handleTestResult(testElement, beforeResult, true, undefined, testType);
+                }
 
-            testType = undefined;
-            this.#handleTestResult(testElement, testResult, true, undefined, testType);
+                testType = undefined;
+                this.#handleTestResult(testElement, testResult, true, undefined, testType);
 
-            testType = 'after';
-            if(afterResult != NOTESTDEFINED) // can't use undefined or null because those are valid result types
-            {
-                this.#handleTestResult(testElement, afterResult, true, undefined, testType);
+                testType = 'after';
+                if(afterResult != NOTESTDEFINED) // can't use undefined or null because those are valid result types
+                {
+                    this.#handleTestResult(testElement, afterResult, true, undefined, testType);
+                }
             }
 
         }
@@ -439,6 +465,11 @@ export class CodeTestsElement extends HTMLElement
         {
             testElement?.classList.remove('running');
             testElement?.part.remove('running');
+            
+            iconElement?.classList.remove('running');
+            iconElement?.part.remove('running');
+
+            this.dispatchEvent(new CustomEvent(CodeTestEventType.AfterTest, { bubbles: true, cancelable: true, composed: true, detail: { testElement } }));
         }
     }
     #handleTestResult(testElement: HTMLElement, result: TestResultType, finishedTest: boolean, error?: Error, beforeOrAfter?: 'before'|'after')
@@ -596,6 +627,12 @@ export class CodeTestsElement extends HTMLElement
         testElement.part.toggle('success', success);
         testElement.classList.toggle('fail', !success);
         testElement.part.toggle('fail', !success);
+        
+        const iconElement = testElement.querySelector('.result-icon');
+        iconElement?.classList.toggle('success', success);
+        iconElement?.part.toggle('success', success);
+        iconElement?.classList.toggle('fail', !success);
+        iconElement?.part.toggle('fail', !success);
 
         const resultElement = testElement.querySelector(`.${beforeOrAfter == undefined
         ? 'result'

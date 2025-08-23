@@ -18,6 +18,12 @@ declare class CodeTests {
 declare function expect(value: any): TestPromise<any>;
 
 type CodeTestsProperties = {};
+declare enum CodeTestEventType {
+    BeforeAll = "beforeall",
+    AfterAll = "afterall",
+    BeforeTest = "beforetest",
+    AfterTest = "aftertest"
+}
 declare class CodeTestsElement extends HTMLElement {
     #private;
     componentParts: Map<string, HTMLElement>;
@@ -33,4 +39,4 @@ declare class CodeTestsElement extends HTMLElement {
     attributeChangedCallback(attributeName: string, oldValue: string, newValue: string): void;
 }
 
-export { AFTERALL, AFTEREACH, BEFOREALL, BEFOREEACH, CodeTests, CodeTestsElement, type CodeTestsProperties, expect };
+export { AFTERALL, AFTEREACH, BEFOREALL, BEFOREEACH, CodeTestEventType, CodeTests, CodeTestsElement, type CodeTestsProperties, expect };
