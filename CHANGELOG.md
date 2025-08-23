@@ -1,5 +1,11 @@
 # @magnit-ce/code-tests
 
+## 0.0.4
+
+### Patch Changes
+
+- e282e1c: fixed issue with running class/part persisting and added auto attribute
+
 ## 0.0.3
 
 ### Patch Changes
