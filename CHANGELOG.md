@@ -1,5 +1,11 @@
 # @magnit-ce/code-tests
 
+## 0.0.3
+
+### Patch Changes
+
+- 151ab15: added result to icon part/class and implemented events
+
 ## 0.0.2
 
 ### Patch Changes
