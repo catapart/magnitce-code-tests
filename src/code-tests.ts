@@ -64,7 +64,11 @@ export class CodeTestsElement extends HTMLElement
     
     connectedCallback()
     {
-        this.addEventListener('click', this.#boundClickHandler)
+        assignClassAndIdToPart(this.shadowRoot!);
+        this.addEventListener('click', this.#boundClickHandler);
+
+        if(this.getAttribute('auto') == 'false') { return; }
+        
         const testsPath = this.getAttribute('src')
         ?? this.getAttribute('test')
         ?? this.getAttribute('tests')
@@ -74,8 +78,6 @@ export class CodeTestsElement extends HTMLElement
         if(testsPath == null) { return; }
 
         this.loadTests(testsPath);
-
-        assignClassAndIdToPart(this.shadowRoot!);
     }
     disconnectedCallback()
     {
@@ -284,6 +286,9 @@ export class CodeTestsElement extends HTMLElement
                 this.#handleHookResult(hookResult, false, 'before', error as Error);
                 console.error(error);
                 this.#continueRunningTests = false;
+                this.classList.remove('running');
+                this.part.remove('running');
+                this.dispatchEvent(new CustomEvent(CodeTestEventType.AfterAll, { bubbles: true, composed: true }));
                 return;
             }
         }
@@ -306,7 +311,13 @@ export class CodeTestsElement extends HTMLElement
             } 
         }
         //@ts-expect-error ts doesn't understand that runTest can change this value?
-        if(this.#continueRunningTests == false) { return; }
+        if(this.#continueRunningTests == false)
+        { 
+            this.classList.remove('running');
+            this.part.remove('running');
+            this.dispatchEvent(new CustomEvent(CodeTestEventType.AfterAll, { bubbles: true, composed: true }));
+            return;
+        }
         const afterHooks = this.#hooks.get(AFTERALL);
         if(afterHooks != null)
         {
@@ -329,6 +340,9 @@ export class CodeTestsElement extends HTMLElement
                 this.#handleHookResult(hookResult, false, 'after', error as Error);
                 console.error(error);
                 this.#continueRunningTests = false;
+                this.classList.remove('running');
+                this.part.remove('running');
+                this.dispatchEvent(new CustomEvent(CodeTestEventType.AfterAll, { bubbles: true, composed: true }));
                 return;
             }
         }

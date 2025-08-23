@@ -526,13 +526,16 @@ var CodeTestsElement = class extends HTMLElement {
     this.#boundClickHandler = this.#onClick.bind(this);
   }
   connectedCallback() {
+    assignClassAndIdToPart(this.shadowRoot);
     this.addEventListener("click", this.#boundClickHandler);
+    if (this.getAttribute("auto") == "false") {
+      return;
+    }
     const testsPath = this.getAttribute("src") ?? this.getAttribute("test") ?? this.getAttribute("tests") ?? this.getAttribute("run") ?? this.getAttribute("path");
     if (testsPath == null) {
       return;
     }
     this.loadTests(testsPath);
-    assignClassAndIdToPart(this.shadowRoot);
   }
   disconnectedCallback() {
     this.removeEventListener("click", this.#boundClickHandler);
@@ -686,6 +689,9 @@ var CodeTestsElement = class extends HTMLElement {
         this.#handleHookResult(hookResult, false, "before", error);
         console.error(error);
         this.#continueRunningTests = false;
+        this.classList.remove("running");
+        this.part.remove("running");
+        this.dispatchEvent(new CustomEvent("afterall" /* AfterAll */, { bubbles: true, composed: true }));
         return;
       }
     }
@@ -704,6 +710,9 @@ var CodeTestsElement = class extends HTMLElement {
       }
     }
     if (this.#continueRunningTests == false) {
+      this.classList.remove("running");
+      this.part.remove("running");
+      this.dispatchEvent(new CustomEvent("afterall" /* AfterAll */, { bubbles: true, composed: true }));
       return;
     }
     const afterHooks = this.#hooks.get(AFTERALL);
@@ -723,6 +732,9 @@ var CodeTestsElement = class extends HTMLElement {
         this.#handleHookResult(hookResult, false, "after", error);
         console.error(error);
         this.#continueRunningTests = false;
+        this.classList.remove("running");
+        this.part.remove("running");
+        this.dispatchEvent(new CustomEvent("afterall" /* AfterAll */, { bubbles: true, composed: true }));
         return;
       }
     }
