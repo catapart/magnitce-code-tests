@@ -1,5 +1,11 @@
 # @magnit-ce/code-tests
 
+## 0.0.5
+
+### Patch Changes
+
+- dc6a538: refactored loadTests to use existing attribute
+
 ## 0.0.4
 
 ### Patch Changes
