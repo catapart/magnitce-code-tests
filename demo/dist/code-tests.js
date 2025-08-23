@@ -531,7 +531,14 @@ var CodeTestsElement = class extends HTMLElement {
     }
     this.#runTest(testId, test);
   }
-  async loadTests(path) {
+  #getCurrentTestsPath() {
+    return this.getAttribute("src") ?? this.getAttribute("test") ?? this.getAttribute("tests") ?? this.getAttribute("run") ?? this.getAttribute("path");
+  }
+  async loadTests(testsPath) {
+    const path = testsPath ?? this.#getCurrentTestsPath();
+    if (path == null) {
+      return;
+    }
     try {
       this.getElement("tests").innerHTML = "";
       this.#tests.clear();
