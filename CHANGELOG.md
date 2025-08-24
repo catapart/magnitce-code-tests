@@ -1,5 +1,11 @@
 # @magnit-ce/code-tests
 
+## 0.0.11
+
+### Patch Changes
+
+- 5c42e4a: updated cancel button light theme
+
 ## 0.0.10
 
 ### Patch Changes
