@@ -1,5 +1,11 @@
 # @magnit-ce/code-tests
 
+## 0.0.13
+
+### Patch Changes
+
+- 13deeb0: fixed issue with wrong tests being run
+
 ## 0.0.12
 
 ### Patch Changes
