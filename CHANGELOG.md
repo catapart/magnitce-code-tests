@@ -1,5 +1,11 @@
 # @magnit-ce/code-tests
 
+## 0.0.8
+
+### Patch Changes
+
+- b347ab9: fixed issue with play button label causing crash
+
 ## 0.0.7
 
 ### Patch Changes
