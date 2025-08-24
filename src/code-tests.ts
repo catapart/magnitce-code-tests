@@ -116,7 +116,7 @@ export class CodeTestsElement extends HTMLElement
         const test = this.#tests.get(testId);
         if(test == null) { return; }
         
-        this.#isCanceled = false;
+        this.isCanceled = false;
         this.classList.remove('canceled');
         this.part.remove('canceled');
         this.#runTest(testId, test);
@@ -278,10 +278,10 @@ export class CodeTestsElement extends HTMLElement
         }
     }
 
-    #isCanceled: boolean = false;
+    isCanceled: boolean = false;
     cancel()
     {
-        this.#isCanceled = true;
+        this.isCanceled = true;
         this.classList.add('canceled');
         this.part.add('canceled');
 
@@ -293,7 +293,7 @@ export class CodeTestsElement extends HTMLElement
         this.dispatchEvent(new CustomEvent(CodeTestEventType.BeforeAll, { bubbles: true, composed: true }));
         this.#continueRunningTests = true;
         this.classList.add('running');
-        this.#isCanceled = false;
+        this.isCanceled = false;
         this.classList.remove('canceled');
         this.part.remove('canceled');
         this.toggleAttribute('success', false);
@@ -320,7 +320,7 @@ export class CodeTestsElement extends HTMLElement
                 for(const [hook, ids] of beforeHooks)
                 {
                     //@ts-expect-error ts doesn't understand that this value can change while awaiting
-                    if(this.#isCanceled == true) { throw new Error("Test has been cancelled"); }
+                    if(this.isCanceled == true) { throw new Error("Test has been cancelled"); }
                     hookResult = await hook(this, beforeAllHookElement);
                     this.#handleHookResult(hookResult, true, 'before');
                 }
@@ -384,7 +384,7 @@ export class CodeTestsElement extends HTMLElement
                 for(const [hook, ids] of afterHooks)
                 {
                     //@ts-expect-error ts doesn't understand that this value can change while awaiting
-                    if(this.#isCanceled == true) { throw new Error("Test has been cancelled"); }
+                    if(this.isCanceled == true) { throw new Error("Test has been cancelled"); }
                     hookResult = await hook(this, afterAllHookElement);
                     this.#handleHookResult(hookResult, true, 'after');
                 }
@@ -486,7 +486,7 @@ export class CodeTestsElement extends HTMLElement
         {
             const allowTest = this.dispatchEvent(new CustomEvent(CodeTestEventType.BeforeTest, { bubbles: true, cancelable: true, composed: true, detail: { testElement } }));
 
-            if(allowTest == false || this.#isCanceled == true) { throw new Error("Test has been cancelled"); }
+            if(allowTest == false || this.isCanceled == true) { throw new Error("Test has been cancelled"); }
             const beforeHooks = this.#hooks.get(BEFOREEACH);
             if(beforeHooks != null)
             {
@@ -501,11 +501,11 @@ export class CodeTestsElement extends HTMLElement
             }
 
             //@ts-expect-error - test can be cancelled while async functions run
-            if(this.#isCanceled == true) { throw new Error("Test has been cancelled"); }
+            if(this.isCanceled == true) { throw new Error("Test has been cancelled"); }
             testResult = await test(this, testElement);
 
             //@ts-expect-error - test can be cancelled while async functions run
-            if(this.#isCanceled == true) { throw new Error("Test has been cancelled"); }
+            if(this.isCanceled == true) { throw new Error("Test has been cancelled"); }
             const afterHooks = this.#hooks.get(AFTEREACH);
             if(afterHooks != null)
             {

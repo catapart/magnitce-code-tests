@@ -104,18 +104,6 @@
     padding: var(--small-spacer);
     font-family: var(--font-text);
 }
-@media (prefers-color-scheme: dark) 
-{
-    :host
-    {
-        --text-surface: var(--uchu-yang);
-        --text-result: var(--uchu-yang);
-
-        --surface-0: var(--uchu-yin);
-        --surface-test: oklch(25.11% 0.006 258.36);
-        --surface-test-summary: oklch(35.02% 0.005 236.66);
-    }
-}
 
 #header
 {
@@ -179,18 +167,19 @@ summary::before
 
 :host(.running) .run[data-all]
 {
-    background-color: var(--surface-test-summary);
-    border-color: var(--surface-test-summary);
+    color: var(--text-surface);
+    background-color: oklch(89.68% 0.002 197.12);
+    border-color: oklch(63.12% 0.004 219.55);
 }
 :host(.running) .run[data-all]:hover
 {
-    background-color: var(--uchu-dark-gray);
-    border-color: var(--uchu-dark-gray);
+    background-color: oklch(95.57% 0.003 286.35);
+    border-color: oklch(63.12% 0.004 219.55);
 }
 :host(.running) .run[data-all]:active
 {
-    background-color: var(--surface-test);
-    border-color: var(--surface-test);
+    background-color: oklch(63.12% 0.004 219.55);
+    border-color: oklch(53.12% 0.004 219.55);
 }
 :host(.running) .run[data-all]::before
 {
@@ -372,6 +361,33 @@ pre
 }
 
 
+@media (prefers-color-scheme: dark) 
+{
+    :host
+    {
+        --text-surface: var(--uchu-yang);
+        --text-result: var(--uchu-yang);
+
+        --surface-0: var(--uchu-yin);
+        --surface-test: oklch(25.11% 0.006 258.36);
+        --surface-test-summary: oklch(35.02% 0.005 236.66);
+    }
+    :host(.running) .run[data-all]
+    {
+        background-color: oklch(35.02% 0.005 236.66);
+        border-color: oklch(35.02% 0.005 236.66);
+    }
+    :host(.running) .run[data-all]:hover
+    {
+        background-color: oklch(63.12% 0.004 219.55);
+        border-color:oklch(63.12% 0.004 219.55);
+    }
+    :host(.running) .run[data-all]:active
+    {
+        background-color: oklch(25.11% 0.006 258.36);
+        border-color: oklch(25.11% 0.006 258.36);
+    }
+}
 
 @keyframes spin
 {

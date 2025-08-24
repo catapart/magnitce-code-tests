@@ -105,18 +105,6 @@ var code_tests_default = `:host\r
     padding: var(--small-spacer);\r
     font-family: var(--font-text);\r
 }\r
-@media (prefers-color-scheme: dark) \r
-{\r
-    :host\r
-    {\r
-        --text-surface: var(--uchu-yang);\r
-        --text-result: var(--uchu-yang);\r
-\r
-        --surface-0: var(--uchu-yin);\r
-        --surface-test: oklch(25.11% 0.006 258.36);\r
-        --surface-test-summary: oklch(35.02% 0.005 236.66);\r
-    }\r
-}\r
 \r
 #header\r
 {\r
@@ -180,18 +168,19 @@ summary::before\r
 \r
 :host(.running) .run[data-all]\r
 {\r
-    background-color: var(--surface-test-summary);\r
-    border-color: var(--surface-test-summary);\r
+    color: var(--text-surface);\r
+    background-color: oklch(89.68% 0.002 197.12);\r
+    border-color: oklch(63.12% 0.004 219.55);\r
 }\r
 :host(.running) .run[data-all]:hover\r
 {\r
-    background-color: var(--uchu-dark-gray);\r
-    border-color: var(--uchu-dark-gray);\r
+    background-color: oklch(95.57% 0.003 286.35);\r
+    border-color: oklch(63.12% 0.004 219.55);\r
 }\r
 :host(.running) .run[data-all]:active\r
 {\r
-    background-color: var(--surface-test);\r
-    border-color: var(--surface-test);\r
+    background-color: oklch(63.12% 0.004 219.55);\r
+    border-color: oklch(53.12% 0.004 219.55);\r
 }\r
 :host(.running) .run[data-all]::before\r
 {\r
@@ -373,6 +362,33 @@ pre\r
 }\r
 \r
 \r
+@media (prefers-color-scheme: dark) \r
+{\r
+    :host\r
+    {\r
+        --text-surface: var(--uchu-yang);\r
+        --text-result: var(--uchu-yang);\r
+\r
+        --surface-0: var(--uchu-yin);\r
+        --surface-test: oklch(25.11% 0.006 258.36);\r
+        --surface-test-summary: oklch(35.02% 0.005 236.66);\r
+    }\r
+    :host(.running) .run[data-all]\r
+    {\r
+        background-color: oklch(35.02% 0.005 236.66);\r
+        border-color: oklch(35.02% 0.005 236.66);\r
+    }\r
+    :host(.running) .run[data-all]:hover\r
+    {\r
+        background-color: oklch(63.12% 0.004 219.55);\r
+        border-color:oklch(63.12% 0.004 219.55);\r
+    }\r
+    :host(.running) .run[data-all]:active\r
+    {\r
+        background-color: oklch(25.11% 0.006 258.36);\r
+        border-color: oklch(25.11% 0.006 258.36);\r
+    }\r
+}\r
 \r
 @keyframes spin\r
 {\r
@@ -609,7 +625,7 @@ var CodeTestsElement = class extends HTMLElement {
     if (test == null) {
       return;
     }
-    this.#isCanceled = false;
+    this.isCanceled = false;
     this.classList.remove("canceled");
     this.part.remove("canceled");
     this.#runTest(testId, test);
@@ -722,9 +738,9 @@ var CodeTestsElement = class extends HTMLElement {
       this.#addProcessError("An error occurred while loading the tasks:", error);
     }
   }
-  #isCanceled = false;
+  isCanceled = false;
   cancel() {
-    this.#isCanceled = true;
+    this.isCanceled = true;
     this.classList.add("canceled");
     this.part.add("canceled");
     this.dispatchEvent(new CustomEvent("cancel" /* Cancel */, { bubbles: true, composed: true }));
@@ -733,7 +749,7 @@ var CodeTestsElement = class extends HTMLElement {
     this.dispatchEvent(new CustomEvent("beforeall" /* BeforeAll */, { bubbles: true, composed: true }));
     this.#continueRunningTests = true;
     this.classList.add("running");
-    this.#isCanceled = false;
+    this.isCanceled = false;
     this.classList.remove("canceled");
     this.part.remove("canceled");
     this.toggleAttribute("success", false);
@@ -751,7 +767,7 @@ var CodeTestsElement = class extends HTMLElement {
         beforeAllHookElement.classList.add("running");
         beforeAllHookElement.part.add("running");
         for (const [hook, ids] of beforeHooks) {
-          if (this.#isCanceled == true) {
+          if (this.isCanceled == true) {
             throw new Error("Test has been cancelled");
           }
           hookResult = await hook(this, beforeAllHookElement);
@@ -803,7 +819,7 @@ var CodeTestsElement = class extends HTMLElement {
         afterAllHookElement.classList.add("running");
         afterAllHookElement.part.add("running");
         for (const [hook, ids] of afterHooks) {
-          if (this.#isCanceled == true) {
+          if (this.isCanceled == true) {
             throw new Error("Test has been cancelled");
           }
           hookResult = await hook(this, afterAllHookElement);
@@ -883,7 +899,7 @@ var CodeTestsElement = class extends HTMLElement {
     let testType;
     try {
       const allowTest = this.dispatchEvent(new CustomEvent("beforetest" /* BeforeTest */, { bubbles: true, cancelable: true, composed: true, detail: { testElement } }));
-      if (allowTest == false || this.#isCanceled == true) {
+      if (allowTest == false || this.isCanceled == true) {
         throw new Error("Test has been cancelled");
       }
       const beforeHooks = this.#hooks.get(BEFOREEACH);
@@ -895,11 +911,11 @@ var CodeTestsElement = class extends HTMLElement {
           }
         }
       }
-      if (this.#isCanceled == true) {
+      if (this.isCanceled == true) {
         throw new Error("Test has been cancelled");
       }
       testResult = await test(this, testElement);
-      if (this.#isCanceled == true) {
+      if (this.isCanceled == true) {
         throw new Error("Test has been cancelled");
       }
       const afterHooks = this.#hooks.get(AFTEREACH);
