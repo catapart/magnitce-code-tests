@@ -1,5 +1,11 @@
 # @magnit-ce/code-tests
 
+## 0.0.7
+
+### Patch Changes
+
+- 4a5f6a9: implemented basic cancel feature
+
 ## 0.0.6
 
 ### Patch Changes
