@@ -1,11 +1,21 @@
 import { default as style } from './code-tests.css?raw';
 import { default as html } from './code-tests.html?raw';
-import { AFTERALL, AFTEREACH, BEFOREALL, BEFOREEACH, CodeTests, expect, prompt, Test, TestResultType, Tests } from './api';
+import { CodeTests, expect, prompt, Test, TestResultType, Tests  } from './api';
 import { assignClassAndIdToPart } from 'ce-part-utils';
 
 export type CodeTestsProperties = 
 {
     
+}
+
+export enum HookType
+{
+    BeforeAll = 'beforeall',
+    AfterAll = 'afterall',
+    BeforeEach = 'beforeeach',
+    AfterEach = 'aftereach',
+    RequiredBeforeAny = 'requiredbeforeany',
+    RequiredAfterAny = 'requiredafterany',
 }
 
 export enum CodeTestEventType
@@ -38,18 +48,14 @@ export class CodeTestsElement extends HTMLElement
     }
     findElement<T extends HTMLElement = HTMLElement>(id: string) { return this.shadowRoot!.getElementById(id) as T; }
 
-    #hooks: Map<symbol, Map<Test, Set<string>>> = new Map();
-    #hookIds: {
-        [BEFOREALL]: string,
-        [BEFOREEACH]: string,
-        [AFTEREACH]: string,
-        [AFTERALL]: string,
-    } = {
-        [BEFOREALL]: generateId(),
-        [BEFOREEACH]: generateId(),
-        [AFTEREACH]: generateId(),
-        [AFTERALL]: generateId(),
-    }
+    #hooks: {
+        [HookType.BeforeAll]?: Test,
+        [HookType.AfterAll]?: Test,
+        [HookType.BeforeEach]?: Test,
+        [HookType.AfterEach]?: Test,
+        [HookType.RequiredBeforeAny]?: Test,
+        [HookType.RequiredAfterAny]?: Test,
+    } = { };
 
     #continueRunningTests: boolean = true;
 
@@ -70,12 +76,7 @@ export class CodeTestsElement extends HTMLElement
 
         if(this.getAttribute('auto') == 'false') { return; }
         
-        const testsPath = this.getAttribute('src')
-        ?? this.getAttribute('test')
-        ?? this.getAttribute('tests')
-        ?? this.getAttribute('run')
-        ?? this.getAttribute('path');
-
+        const testsPath = this.#getCurrentTestsPath();
         if(testsPath == null) { return; }
 
         this.loadTests(testsPath);
@@ -154,7 +155,6 @@ export class CodeTestsElement extends HTMLElement
             let moduleContent = await (await fetch(modulePath)).text();
             moduleContent = moduleContent.replaceAll(/['"`](((\.\/)|(\.\.\/))+(.*))['"`]/g, `'${moduleDirectory}$1'`);
             // console.log(moduleContent);
-            // console.log(moduleContent);
             const moduleFile = new File([moduleContent], path.substring(path.lastIndexOf('/')), { type: 'text/javascript' });
             const moduleURL = URL.createObjectURL(moduleFile);
             // const module = await import(`data:text/javascript,${encodeURIComponent(moduleContent)}`);
@@ -167,109 +167,53 @@ export class CodeTestsElement extends HTMLElement
                 throw new Error(`Unable to find tests definition in file at path: ${path}`);
             }
 
-            const beforeAll = tests[BEFOREALL];
+            const beforeAll = tests[HookType.BeforeAll];
             if(beforeAll != null)
             {
-                const hookMap = this.#hooks.get(BEFOREALL);
-                if(hookMap == null)
-                {
-                    const map = new Map();
-                    map.set(beforeAll, new Set());
-                    this.#hooks.set(BEFOREALL, map);
-                }
+                this.#hooks[HookType.BeforeAll] = beforeAll;
+                delete tests[HookType.BeforeAll];
 
                 this.classList.add('has-before-hook');
             }
-            const beforeEach = tests[BEFOREEACH];
-            if(beforeEach != null)
-            {
-                const hookMap = this.#hooks.get(BEFOREEACH);
-                if(hookMap == null)
-                {
-                    const map = new Map();
-                    map.set(beforeEach, new Set());
-                    this.#hooks.set(BEFOREEACH, map);
-                }
-            }
-            const afterAll = tests[AFTERALL];
+            const afterAll = tests[HookType.AfterAll];
             if(afterAll != null)
             {
-                const hookMap = this.#hooks.get(AFTERALL);
-                if(hookMap == null)
-                {
-                    const map = new Map();
-                    map.set(afterAll, new Set());
-                    this.#hooks.set(AFTERALL, map);
-                }
+                this.#hooks[HookType.AfterAll] = beforeAll;
+                delete tests[HookType.AfterAll];
                 this.classList.add('has-after-hook');
             }
-            const afterEach = tests[AFTEREACH];
+            const beforeEach = tests[HookType.BeforeEach];
+            if(beforeEach != null)
+            {
+                this.#hooks[HookType.BeforeEach] = beforeAll;
+                delete tests[HookType.BeforeEach];
+            }
+            const afterEach = tests[HookType.AfterEach];
             if(afterEach != null)
             {
-                const hookMap = this.#hooks.get(AFTEREACH);
-                if(hookMap == null)
-                {
-                    const map = new Map();
-                    map.set(afterEach, new Set());
-                    this.#hooks.set(AFTEREACH, map);
-                }
+                this.#hooks[HookType.AfterEach] = beforeAll;
+                delete tests[HookType.AfterEach];
             }
-
-            // cancel test
-            // after all hook doesn't reset on runTests start
+            const requiredBeforeAny = tests[HookType.RequiredBeforeAny];
+            if(requiredBeforeAny != null)
+            {
+                this.#hooks[HookType.RequiredBeforeAny] = requiredBeforeAny;
+                delete tests[HookType.RequiredBeforeAny];
+                this.classList.add('has-required-before-hook');
+                this.part.add('has-required-before-hook');
+            }
+            const requiredAfterAny = tests[HookType.RequiredAfterAny];
+            if(requiredAfterAny != null)
+            {
+                this.#hooks[HookType.RequiredAfterAny] = requiredAfterAny;
+                delete tests[HookType.RequiredAfterAny];
+                this.classList.add('has-required-after-hook');
+                this.part.add('has-required-after-hook');
+            }
 
             for(const [description, test] of Object.entries(tests))
             {
-                const id = this.#addTest(description, test);
-
-                if(beforeAll != null)
-                {
-                    const hookMap = this.#hooks.get(BEFOREALL);
-                    if(hookMap != null)
-                    {
-                        const testIds = hookMap.get(beforeAll);
-                        if(testIds != null)
-                        {
-                            testIds.add(id);
-                        }
-                    }
-                }
-                if(beforeEach != null)
-                {
-                    const hookMap = this.#hooks.get(BEFOREEACH);
-                    if(hookMap != null)
-                    {
-                        const testIds = hookMap.get(beforeEach);
-                        if(testIds != null)
-                        {
-                            testIds.add(id);
-                        }
-                    }
-                }
-                if(afterAll != null)
-                {
-                    const hookMap = this.#hooks.get(AFTERALL);
-                    if(hookMap != null)
-                    {
-                        const testIds = hookMap.get(afterAll);
-                        if(testIds != null)
-                        {
-                            testIds.add(id);
-                        }
-                    }
-                }
-                if(afterEach != null)
-                {
-                    const hookMap = this.#hooks.get(AFTEREACH);
-                    if(hookMap != null)
-                    {
-                        const testIds = hookMap.get(afterEach);
-                        if(testIds != null)
-                        {
-                            testIds.add(id);
-                        }
-                    }
-                }
+                this.#addTest(description, test);
             }
         }
         catch(error)
@@ -308,28 +252,27 @@ export class CodeTestsElement extends HTMLElement
 
         const inOrder = this.hasAttribute('in-order');
 
-        const beforeHooks = this.#hooks.get(BEFOREALL);
-        if(beforeHooks != null)
+        const requiredBeforeHook = this.#hooks[HookType.RequiredBeforeAny];
+        if(requiredBeforeHook != null)
         {
             let hookResult;
             try
             {
-                const beforeAllHookElement = this.getElement(`before-all-details`);
-                beforeAllHookElement.classList.add('running');
-                beforeAllHookElement.part.add('running');
-                for(const [hook, ids] of beforeHooks)
-                {
-                    //@ts-expect-error ts doesn't understand that this value can change while awaiting
-                    if(this.isCanceled == true) { throw new Error("Test has been cancelled"); }
-                    hookResult = await hook(this, beforeAllHookElement);
-                    this.#handleHookResult(hookResult, true, 'before');
-                }
-                beforeAllHookElement.part.remove('running');
-                beforeAllHookElement.classList.remove('running');
+                const requiredBeforeAnyHookElement = this.getElement(`required-before-any-details`);
+                requiredBeforeAnyHookElement.classList.add('running');
+                requiredBeforeAnyHookElement.part.add('running');
+
+                //@ts-expect-error ts doesn't understand that this value can change while awaiting
+                if(this.isCanceled == true) { throw new Error("Test has been cancelled"); }
+                hookResult = await requiredBeforeHook(this, requiredBeforeAnyHookElement);
+
+                this.#handleHookResult(hookResult, true, 'before', true);
+                requiredBeforeAnyHookElement.part.remove('running');
+                requiredBeforeAnyHookElement.classList.remove('running');
             }
             catch(error)
             {
-                this.#handleHookResult(hookResult, false, 'before', error as Error);
+                this.#handleHookResult(hookResult, false, 'before', true, error as Error);
                 console.error(error);
                 this.#continueRunningTests = false;
                 this.classList.remove('running');
@@ -342,6 +285,41 @@ export class CodeTestsElement extends HTMLElement
                 return;
             }
         }
+
+        const beforeHook = this.#hooks[HookType.BeforeAll]
+        if(beforeHook != null)
+        {
+            let hookResult;
+            try
+            {
+                const beforeAllHookElement = this.getElement(`before-all-details`);
+                beforeAllHookElement.classList.add('running');
+                beforeAllHookElement.part.add('running');
+
+                //@ts-expect-error ts doesn't understand that this value can change while awaiting
+                if(this.isCanceled == true) { throw new Error("Test has been cancelled"); }
+                hookResult = await beforeHook(this, beforeAllHookElement);
+
+                this.#handleHookResult(hookResult, true, 'before', false);
+                beforeAllHookElement.part.remove('running');
+                beforeAllHookElement.classList.remove('running');
+            }
+            catch(error)
+            {
+                this.#handleHookResult(hookResult, false, 'before', false, error as Error);
+                console.error(error);
+                this.#continueRunningTests = false;
+                this.classList.remove('running');
+                this.part.remove('running');
+                if(playButtonLabel != null)
+                {
+                    playButtonLabel.textContent = "Run Tests";
+                }
+                this.dispatchEvent(new CustomEvent(CodeTestEventType.AfterAll, { bubbles: true, composed: true }));
+                return;
+            }
+        }
+
         if(inOrder == false)
         {
             const promises = [];
@@ -357,7 +335,7 @@ export class CodeTestsElement extends HTMLElement
             {
                 //@ts-expect-error ts doesn't understand that runTest can change this value?
                 if(this.#continueRunningTests == false) { break; }
-                await this.#runTest(id, test)
+                await this.#runTest(id, test, false);
             } 
         }
         //@ts-expect-error ts doesn't understand that runTest can change this value?
@@ -372,8 +350,9 @@ export class CodeTestsElement extends HTMLElement
             this.dispatchEvent(new CustomEvent(CodeTestEventType.AfterAll, { bubbles: true, composed: true }));
             return;
         }
-        const afterHooks = this.#hooks.get(AFTERALL);
-        if(afterHooks != null)
+
+        const afterHook = this.#hooks[HookType.AfterAll];
+        if(afterHook != null)
         {
             let hookResult;
             try
@@ -381,20 +360,46 @@ export class CodeTestsElement extends HTMLElement
                 const afterAllHookElement = this.getElement(`after-all-details`);
                 afterAllHookElement.classList.add('running');
                 afterAllHookElement.part.add('running');
-                for(const [hook, ids] of afterHooks)
-                {
-                    //@ts-expect-error ts doesn't understand that this value can change while awaiting
-                    if(this.isCanceled == true) { throw new Error("Test has been cancelled"); }
-                    hookResult = await hook(this, afterAllHookElement);
-                    this.#handleHookResult(hookResult, true, 'after');
-                }
+                
+                //@ts-expect-error ts doesn't understand that this value can change while awaiting
+                if(this.isCanceled == true) { throw new Error("Test has been cancelled"); }
+                hookResult = await afterHook(this, afterAllHookElement);
+                this.#handleHookResult(hookResult, true, 'after', false);
+
                 afterAllHookElement.part.remove('running');
                 afterAllHookElement.classList.remove('running');
             }
             catch(error)
             {
-                this.#handleHookResult(hookResult, false, 'after', error as Error);
+                this.#handleHookResult(hookResult, false, 'after', false, error as Error);
                 console.error(error);
+
+                
+                const requiredAfterHook = this.#hooks[HookType.RequiredAfterAny];
+                if(requiredAfterHook != null)
+                {
+                    let hookResult;
+                    try
+                    {
+                        const requiredAfterAnyHookElement = this.getElement(`required-after-any-details`);
+                        requiredAfterAnyHookElement.classList.add('running');
+                        requiredAfterAnyHookElement.part.add('running');
+
+                        //@ts-expect-error ts doesn't understand that this value can change while awaiting
+                        if(this.isCanceled == true) { throw new Error("Test has been cancelled"); }
+                        hookResult = await requiredAfterHook(this, requiredAfterAnyHookElement);
+
+                        this.#handleHookResult(hookResult, true, 'after', true);
+                        requiredAfterAnyHookElement.part.remove('running');
+                        requiredAfterAnyHookElement.classList.remove('running');
+                    }
+                    catch(error)
+                    {
+                        this.#handleHookResult(hookResult, false, 'after', true, error as Error);
+                        console.error(error);
+                    }
+                }
+
                 this.#continueRunningTests = false;
                 this.classList.remove('running');
                 this.part.remove('running');
@@ -404,6 +409,32 @@ export class CodeTestsElement extends HTMLElement
                 }
                 this.dispatchEvent(new CustomEvent(CodeTestEventType.AfterAll, { bubbles: true, composed: true }));
                 return;
+            }
+        }        
+
+        const requiredAfterHook = this.#hooks[HookType.RequiredAfterAny];
+        if(requiredAfterHook != null)
+        {
+            let hookResult;
+            try
+            {
+                const requiredAfterAnyHookElement = this.getElement(`required-after-any-details`);
+                requiredAfterAnyHookElement.classList.add('running');
+                requiredAfterAnyHookElement.part.add('running');
+
+                //@ts-expect-error ts doesn't understand that this value can change while awaiting
+                if(this.isCanceled == true) { throw new Error("Test has been cancelled"); }
+                hookResult = await requiredAfterHook(this, requiredAfterAnyHookElement);
+
+                this.#handleHookResult(hookResult, true, 'after', true);
+                requiredAfterAnyHookElement.part.remove('running');
+                requiredAfterAnyHookElement.classList.remove('running');
+            }
+            catch(error)
+            {
+                this.#handleHookResult(hookResult, false, 'after', true, error as Error);
+                console.error(error);
+                this.#continueRunningTests = false;
             }
         }
 
@@ -443,7 +474,7 @@ export class CodeTestsElement extends HTMLElement
         afterAllHookElement.classList.remove('success', 'fail');
         afterAllHookElement.part.remove('success', 'fail');
     }
-    async #runTest(testId: string, test: Test)
+    async #runTest(testId: string, test: Test, handleRequiredTests: boolean = true)
     {
         const testElement = this.getElement('tests').querySelector<HTMLElement>(`[data-test-id="${testId}"]`);
         if(testElement == null)
@@ -486,18 +517,42 @@ export class CodeTestsElement extends HTMLElement
         {
             const allowTest = this.dispatchEvent(new CustomEvent(CodeTestEventType.BeforeTest, { bubbles: true, cancelable: true, composed: true, detail: { testElement } }));
 
-            if(allowTest == false || this.isCanceled == true) { throw new Error("Test has been cancelled"); }
-            const beforeHooks = this.#hooks.get(BEFOREEACH);
-            if(beforeHooks != null)
+            if(handleRequiredTests == true)
             {
-                for(const [hook, ids] of beforeHooks)
+                const requiredBeforeHook = this.#hooks[HookType.RequiredBeforeAny];
+                if(requiredBeforeHook != null)
                 {
-                    if(ids.has(testId))
+                    let hookResult;
+                    try
                     {
-                        beforeResult = await hook(this, testElement);
-                        break;
+                        const requiredBeforeAnyHookElement = this.getElement(`required-before-any-details`);
+                        requiredBeforeAnyHookElement.classList.add('running');
+                        requiredBeforeAnyHookElement.part.add('running');
+
+                        if(this.isCanceled == true) { throw new Error("Test has been cancelled"); }
+                        hookResult = await requiredBeforeHook(this, requiredBeforeAnyHookElement);
+
+                        this.#handleHookResult(hookResult, true, 'before', true);
+                        requiredBeforeAnyHookElement.part.remove('running');
+                        requiredBeforeAnyHookElement.classList.remove('running');
+                    }
+                    catch(error)
+                    {
+                        this.#handleHookResult(hookResult, true, 'before', true, error as Error);
+                        console.error(error);
+                        this.#continueRunningTests = false;
+                        return;
                     }
                 }
+            }
+
+            if(this.#continueRunningTests == false) { throw new Error("Tests have been disabled from continuing to run."); }
+
+            if(allowTest == false || this.isCanceled == true) { throw new Error("Test has been cancelled"); }
+            const beforeHook = this.#hooks[HookType.BeforeEach];
+            if(beforeHook != null)
+            {
+                beforeResult = await beforeHook(this, testElement);
             }
 
             //@ts-expect-error - test can be cancelled while async functions run
@@ -506,15 +561,38 @@ export class CodeTestsElement extends HTMLElement
 
             //@ts-expect-error - test can be cancelled while async functions run
             if(this.isCanceled == true) { throw new Error("Test has been cancelled"); }
-            const afterHooks = this.#hooks.get(AFTEREACH);
-            if(afterHooks != null)
+            const afterHook = this.#hooks[HookType.AfterEach];
+            if(afterHook != null)
             {
-                for(const [hook, ids] of afterHooks)
+                afterResult = await afterHook(this, testElement);
+            }
+            
+            if(handleRequiredTests == true)
+            {
+                const requiredAfterHook = this.#hooks[HookType.RequiredAfterAny];
+                if(requiredAfterHook != null)
                 {
-                    if(ids.has(testId))
+                    let hookResult;
+                    try
                     {
-                        afterResult = await hook(this, testElement);
-                        break;
+                        const requiredBeforeAnyHookElement = this.getElement(`required-before-any-details`);
+                        requiredBeforeAnyHookElement.classList.add('running');
+                        requiredBeforeAnyHookElement.part.add('running');
+
+                        //@ts-expect-error ts doesn't understand that this value can change while awaiting
+                        if(this.isCanceled == true) { throw new Error("Test has been cancelled"); }
+                        hookResult = await requiredAfterHook(this, requiredBeforeAnyHookElement);
+
+                        this.#handleHookResult(hookResult, true, 'after', true);
+                        requiredBeforeAnyHookElement.part.remove('running');
+                        requiredBeforeAnyHookElement.classList.remove('running');
+                    }
+                    catch(error)
+                    {
+                        this.#handleHookResult(hookResult, true, 'after', true, error as Error);
+                        console.error(error);
+                        this.#continueRunningTests = false;
+                        return;
                     }
                 }
             }
@@ -591,11 +669,11 @@ export class CodeTestsElement extends HTMLElement
             detailsElement.open = true;
         }
     }
-    #handleHookResult(result: TestResultType, finishedTest: boolean, beforeOrAfter: 'before'|'after', error?: Error)
+    #handleHookResult(result: TestResultType, finishedTest: boolean, beforeOrAfter: 'before'|'after', required: boolean, error?: Error)
     {
         if(result instanceof HTMLElement)
         {
-            this.#setHookResult(result, finishedTest, beforeOrAfter);
+            this.#setHookResult(result, finishedTest, beforeOrAfter, required);
         }
         else 
         {
@@ -603,12 +681,12 @@ export class CodeTestsElement extends HTMLElement
             if(result == undefined)
             {
                 defaultResult = this.#createDefaultResult(finishedTest == true ? 'Hook Ran Successfully' : `Failed${(error != null) ? `:\n${error.message}` : ''}`, finishedTest);
-                this.#setHookResult(defaultResult, finishedTest, beforeOrAfter);
+                this.#setHookResult(defaultResult, finishedTest, beforeOrAfter, required);
             }
             else if(typeof result == 'string')
             {
                 defaultResult = this.#createDefaultResult(`${result}${error == null ? '' : `:\n${error.message}`}`, finishedTest);
-                this.#setHookResult(defaultResult, finishedTest, beforeOrAfter);
+                this.#setHookResult(defaultResult, finishedTest, beforeOrAfter, required);
             }
             else if(typeof result == 'object')
             {
@@ -621,7 +699,7 @@ export class CodeTestsElement extends HTMLElement
                         `${(objectResult.success == true) ?'Success:' : 'Fail:'}\nExpected:${objectResult.expected}\nResult:${objectResult.value}`,
                         objectResult.success
                     );
-                    this.#setHookResult(defaultResult, finishedTest, beforeOrAfter);
+                    this.#setHookResult(defaultResult, finishedTest, beforeOrAfter, required);
                 }
             }
         }
@@ -742,10 +820,13 @@ export class CodeTestsElement extends HTMLElement
         codeElement.appendChild(preElement);
         return codeElement;
     }
-    #setHookResult(valueElement: HTMLElement, success: boolean, beforeOrAfter: 'before'|'after')
+    #setHookResult(valueElement: HTMLElement, success: boolean, beforeOrAfter: 'before'|'after', required: boolean)
     {
-        const detailsElement = this.getElement(`${beforeOrAfter}-all-details`);
-        const resultsElement = this.getElement(`${beforeOrAfter}-all-results`);
+        const selector = (required == true)
+        ? `required-${beforeOrAfter}-any`
+        : `${beforeOrAfter}-all`;
+        const detailsElement = this.getElement(`${selector}-details`);
+        const resultsElement = this.getElement(`${selector}-results`);
         detailsElement.setAttribute('success', success == true ? 'true' : 'false');
         detailsElement.classList.toggle('success', success);
         detailsElement.part.toggle('success', success);
@@ -854,9 +935,5 @@ export
 { 
     CodeTests,
     expect,
-    prompt,
-    BEFOREALL,
-    BEFOREEACH,
-    AFTERALL,
-    AFTEREACH
+    prompt
 };

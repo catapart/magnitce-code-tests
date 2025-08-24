@@ -1,25 +1,33 @@
-import { AFTERALL, AFTEREACH, BEFOREALL, BEFOREEACH, expect } from '../dist/code-tests.js';
+import { expect, HookType } from '../dist/code-tests.js';
 
 export default {
-    [BEFOREALL]: async () =>
+    [HookType.RequiredBeforeAny]: async () =>
+    {
+        console.log('this should run once before any other test is run');
+    },
+    [HookType.BeforeAll]: async () =>
     {
         console.log('this should run once before all tests');
         await new Promise(resolve => setTimeout(resolve, 1000));
         await expect(true).toBe(true);
     },
-    [BEFOREEACH]: async () =>
+    [HookType.BeforeEach]: async () =>
     {
         console.log('this should run before each test');
     },
-    [AFTEREACH]: async () =>
+    [HookType.AfterEach]: async () =>
     {
         console.log('this should run after each test');
     },
-    [AFTERALL]: async () =>
+    [HookType.AfterAll]: async () =>
     {
         console.log('this should run once after all tests');
         await new Promise(resolve => setTimeout(resolve, 1000));
         await expect(true).toBe(true);
+    },
+    [HookType.RequiredAfterAny]: async () =>
+    {
+        console.log('this should run once after any other test has been run');
     },
     'should be useful for before-after test': async () =>
     {

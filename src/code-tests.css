@@ -128,9 +128,23 @@
     display: none;
 }
 :host(.has-before-hook) #before-all-details
-,:host(.has-before-hook) #after-all-details
+,:host(.has-after-hook) #after-all-details
 {
     display: initial;
+}
+:host(.has-required-before-hook) #required-before-any-details
+,:host(.has-required-after-hook) #required-after-any-details
+{
+    display: initial;
+}
+
+#required-before-any-summary
+,#required-after-any-summary
+{
+    background: var(--surface-process);
+    color: var(--text-process);
+    border: solid 1px var(--text-process);
+    grid-template-columns: auto auto 1fr;
 }
 
 #tests

@@ -4,10 +4,6 @@ declare class TestPromise<T> extends Promise<T> {
     toContainText(value: string): Promise<void>;
     toHaveAttribute(value: string): Promise<void>;
 }
-declare const BEFOREALL: unique symbol;
-declare const BEFOREEACH: unique symbol;
-declare const AFTERALL: unique symbol;
-declare const AFTEREACH: unique symbol;
 declare class CodeTests {
     #private;
     static timeoutMS: number;
@@ -27,6 +23,14 @@ type PromptOptions = {
 declare function prompt(host: CodeTestsElement, parent: HTMLElement, message: string, options?: PromptOptions): Promise<boolean>;
 
 type CodeTestsProperties = {};
+declare enum HookType {
+    BeforeAll = "beforeall",
+    AfterAll = "afterall",
+    BeforeEach = "beforeeach",
+    AfterEach = "aftereach",
+    RequiredBeforeAny = "requiredbeforeany",
+    RequiredAfterAny = "requiredafterany"
+}
 declare enum CodeTestEventType {
     BeforeAll = "beforeall",
     AfterAll = "afterall",
@@ -51,4 +55,4 @@ declare class CodeTestsElement extends HTMLElement {
     attributeChangedCallback(attributeName: string, oldValue: string, newValue: string): void;
 }
 
-export { AFTERALL, AFTEREACH, BEFOREALL, BEFOREEACH, CodeTestEventType, CodeTests, CodeTestsElement, type CodeTestsProperties, expect, prompt };
+export { CodeTestEventType, CodeTests, CodeTestsElement, type CodeTestsProperties, HookType, expect, prompt };

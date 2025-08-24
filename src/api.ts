@@ -100,10 +100,6 @@ export type TestResult = { success: boolean, expected: any, value: any; };
 export type TestResultType = void|undefined|string|TestResult|HTMLElement;
 export type Test = <T extends TestResultType>(host: CodeTestsElement, parent: HTMLElement) => T|Promise<T>;
 export type Tests = { [key: string|symbol]: Test };
-export const BEFOREALL = Symbol("beforeAll");
-export const BEFOREEACH = Symbol("beforeEach");
-export const AFTERALL = Symbol("afterAll");
-export const AFTEREACH = Symbol("afterEach");
 
 export class CodeTests
 {

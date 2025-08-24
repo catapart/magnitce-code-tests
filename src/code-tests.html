@@ -11,6 +11,13 @@
         <slot name="details"></slot>
     </header>
 </slot>
+<details id="required-before-any-details" class="hook">
+    <summary id="required-before-any-summary">
+        <span id="required-before-any-result-icon" class="result-icon"></span>
+        <span id="required-before-any-description" class="description">Results from Required Before Any Hook</span>
+    </summary>
+    <div id="required-before-any-results" class="results"></div>
+</details>
 <details id="before-all-details" class="hook">
     <summary id="before-all-summary">
         <span id="before-all-result-icon" class="result-icon"></span>
@@ -25,6 +32,13 @@
         <span id="after-all-description" class="description">Results from After All Hook</span>
     </summary>
     <div id="after-all-results" class="results"></div>
+</details>
+<details id="required-after-any-details" class="hook">
+    <summary id="required-after-any-summary">
+        <span id="required-after-any-result-icon" class="result-icon"></span>
+        <span id="required-after-any-description" class="description">Results from Required After Any Hook</span>
+    </summary>
+    <div id="required-after-any-results" class="results"></div>
 </details>
 
 <template id="prompt-template">
