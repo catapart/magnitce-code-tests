@@ -277,13 +277,12 @@ summary::before
 ,.hook:is(.running) .result-icon::before
 {
     content: '';
-    --icon-size: 18px;
     --color: var(--text-process);
     --animation-timing-function: linear;
     --animation-duration: 2s;
-    width: var(--icon-size);
-    height: var(--icon-size);
-    mask-image: radial-gradient(circle at 50% 50%, transparent calc(var(--icon-size) / 3), black calc(var(--icon-size) / 3));
+    width: var(--icon-size, 18px);
+    height: var(--icon-size, 18px);
+    mask-image: radial-gradient(circle at 50% 50%, transparent calc(var(--icon-size, 18px) / 3), black calc(var(--icon-size, 18px) / 3));
     background-image: conic-gradient(transparent, transparent 135deg, var(--color));
     border-radius: 50%;
     animation: var(--animation-timing-function) var(--animation-duration) infinite spin;

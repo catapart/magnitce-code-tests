@@ -278,13 +278,12 @@ summary::before\r
 ,.hook:is(.running) .result-icon::before\r
 {\r
     content: '';\r
-    --icon-size: 18px;\r
     --color: var(--text-process);\r
     --animation-timing-function: linear;\r
     --animation-duration: 2s;\r
-    width: var(--icon-size);\r
-    height: var(--icon-size);\r
-    mask-image: radial-gradient(circle at 50% 50%, transparent calc(var(--icon-size) / 3), black calc(var(--icon-size) / 3));\r
+    width: var(--icon-size, 18px);\r
+    height: var(--icon-size, 18px);\r
+    mask-image: radial-gradient(circle at 50% 50%, transparent calc(var(--icon-size, 18px) / 3), black calc(var(--icon-size, 18px) / 3));\r
     background-image: conic-gradient(transparent, transparent 135deg, var(--color));\r
     border-radius: 50%;\r
     animation: var(--animation-timing-function) var(--animation-duration) infinite spin;\r
