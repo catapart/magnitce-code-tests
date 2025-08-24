@@ -295,7 +295,11 @@ export class CodeTestsElement extends HTMLElement
         this.part.remove('canceled');
         this.toggleAttribute('success', false);
 
-        this.findElement('play-button-label').textContent = "Cancel";
+        const playButtonLabel = this.findElement('play-button-label');
+        if(playButtonLabel != null)
+        {
+            playButtonLabel.textContent = "Cancel";
+        }
 
         this.#clearTestStatuses();
 
@@ -327,7 +331,10 @@ export class CodeTestsElement extends HTMLElement
                 this.#continueRunningTests = false;
                 this.classList.remove('running');
                 this.part.remove('running');
-                this.findElement('play-button-label').textContent = "Run Tests";
+                if(playButtonLabel != null)
+                {
+                    playButtonLabel.textContent = "Run Tests";
+                }
                 this.dispatchEvent(new CustomEvent(CodeTestEventType.AfterAll, { bubbles: true, composed: true }));
                 return;
             }
@@ -355,7 +362,10 @@ export class CodeTestsElement extends HTMLElement
         { 
             this.classList.remove('running');
             this.part.remove('running');
-             this.findElement('play-button-label').textContent = "Run Tests";
+            if(playButtonLabel != null)
+            {
+                playButtonLabel.textContent = "Run Tests";
+            }
             this.dispatchEvent(new CustomEvent(CodeTestEventType.AfterAll, { bubbles: true, composed: true }));
             return;
         }
@@ -385,7 +395,10 @@ export class CodeTestsElement extends HTMLElement
                 this.#continueRunningTests = false;
                 this.classList.remove('running');
                 this.part.remove('running');
-                this.findElement('play-button-label').textContent = "Run Tests";
+                if(playButtonLabel != null)
+                {
+                    playButtonLabel.textContent = "Run Tests";
+                }
                 this.dispatchEvent(new CustomEvent(CodeTestEventType.AfterAll, { bubbles: true, composed: true }));
                 return;
             }
@@ -394,8 +407,11 @@ export class CodeTestsElement extends HTMLElement
         const failedTests = this.shadowRoot!.querySelectorAll('[success="false"]');
         this.setAttribute('success', failedTests.length == 0 ? 'true' : 'false');
         this.classList.remove('running');
-        this.part.remove('running');        
-        this.findElement('play-button-label').textContent = "Run Tests";
+        this.part.remove('running');
+        if(playButtonLabel != null)
+        {
+            playButtonLabel.textContent = "Run Tests";
+        }
         this.dispatchEvent(new CustomEvent(CodeTestEventType.AfterAll, { bubbles: true, composed: true }));
     }
     #clearTestStatuses()

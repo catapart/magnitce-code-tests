@@ -769,7 +769,10 @@ var CodeTestsElement = class extends HTMLElement {
     this.classList.remove("canceled");
     this.part.remove("canceled");
     this.toggleAttribute("success", false);
-    this.findElement("play-button-label").textContent = "Cancel";
+    const playButtonLabel = this.findElement("play-button-label");
+    if (playButtonLabel != null) {
+      playButtonLabel.textContent = "Cancel";
+    }
     this.#clearTestStatuses();
     const inOrder = this.hasAttribute("in-order");
     const beforeHooks = this.#hooks.get(BEFOREALL);
@@ -794,7 +797,9 @@ var CodeTestsElement = class extends HTMLElement {
         this.#continueRunningTests = false;
         this.classList.remove("running");
         this.part.remove("running");
-        this.findElement("play-button-label").textContent = "Run Tests";
+        if (playButtonLabel != null) {
+          playButtonLabel.textContent = "Run Tests";
+        }
         this.dispatchEvent(new CustomEvent("afterall" /* AfterAll */, { bubbles: true, composed: true }));
         return;
       }
@@ -816,7 +821,9 @@ var CodeTestsElement = class extends HTMLElement {
     if (this.#continueRunningTests == false) {
       this.classList.remove("running");
       this.part.remove("running");
-      this.findElement("play-button-label").textContent = "Run Tests";
+      if (playButtonLabel != null) {
+        playButtonLabel.textContent = "Run Tests";
+      }
       this.dispatchEvent(new CustomEvent("afterall" /* AfterAll */, { bubbles: true, composed: true }));
       return;
     }
@@ -842,7 +849,9 @@ var CodeTestsElement = class extends HTMLElement {
         this.#continueRunningTests = false;
         this.classList.remove("running");
         this.part.remove("running");
-        this.findElement("play-button-label").textContent = "Run Tests";
+        if (playButtonLabel != null) {
+          playButtonLabel.textContent = "Run Tests";
+        }
         this.dispatchEvent(new CustomEvent("afterall" /* AfterAll */, { bubbles: true, composed: true }));
         return;
       }
@@ -851,7 +860,9 @@ var CodeTestsElement = class extends HTMLElement {
     this.setAttribute("success", failedTests.length == 0 ? "true" : "false");
     this.classList.remove("running");
     this.part.remove("running");
-    this.findElement("play-button-label").textContent = "Run Tests";
+    if (playButtonLabel != null) {
+      playButtonLabel.textContent = "Run Tests";
+    }
     this.dispatchEvent(new CustomEvent("afterall" /* AfterAll */, { bubbles: true, composed: true }));
   }
   #clearTestStatuses() {
