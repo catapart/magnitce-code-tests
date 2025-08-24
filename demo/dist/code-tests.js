@@ -81,6 +81,7 @@ var code_tests_default = `:host\r
     --surface-button: var(--uchu-blue); /* --uchu-blue: #3984f2 */\r
     --surface-button-hover: var(--uchu-light-blue);\r
     --surface-button-active: var(--uchu-dark-blue);\r
+    --surface-button-cancel: var(--uchu-dark-blue);\r
 \r
     --border-test: solid 1px var(--uchu-dark-gray);\r
     --border-hook: solid 1px var(--uchu-dark-purple);\r
@@ -174,6 +175,26 @@ summary::before\r
 {\r
     transform: rotate(0);\r
     /* background: var(--surface-test-summary); */\r
+}\r
+\r
+:host(.running) .run[data-all]\r
+{\r
+    background-color: var(--surface-test-summary);\r
+    border-color: var(--surface-test-summary);\r
+}\r
+:host(.running) .run[data-all]:hover\r
+{\r
+    background-color: var(--uchu-dark-gray);\r
+    border-color: var(--uchu-dark-gray);\r
+}\r
+:host(.running) .run[data-all]:active\r
+{\r
+    background-color: var(--surface-test);\r
+    border-color: var(--surface-test);\r
+}\r
+:host(.running) .run[data-all]::before\r
+{\r
+    display: none;\r
 }\r
 \r
 #before-all-summary\r
@@ -568,7 +589,14 @@ var CodeTestsElement = class extends HTMLElement {
     if (parentListItem == null) {
       const isRunAll = runButton.hasAttribute("data-all");
       if (isRunAll == true) {
-        this.runTests();
+        if (this.classList.contains("running")) {
+          if (this.classList.contains("canceled")) {
+            return;
+          }
+          this.cancel();
+        } else {
+          this.runTests();
+        }
       }
       return;
     }
@@ -580,6 +608,9 @@ var CodeTestsElement = class extends HTMLElement {
     if (test == null) {
       return;
     }
+    this.#isCanceled = false;
+    this.classList.remove("canceled");
+    this.part.remove("canceled");
     this.#runTest(testId, test);
   }
   #getCurrentTestsPath() {
@@ -690,11 +721,21 @@ var CodeTestsElement = class extends HTMLElement {
       this.#addProcessError("An error occurred while loading the tasks:", error);
     }
   }
+  #isCanceled = false;
+  cancel() {
+    this.#isCanceled = true;
+    this.classList.add("canceled");
+    this.part.add("canceled");
+  }
   async runTests() {
     this.dispatchEvent(new CustomEvent("beforeall" /* BeforeAll */, { bubbles: true, composed: true }));
     this.#continueRunningTests = true;
     this.classList.add("running");
+    this.#isCanceled = false;
+    this.classList.remove("canceled");
+    this.part.remove("canceled");
     this.toggleAttribute("success", false);
+    this.findElement("play-button-label").textContent = "Cancel";
     this.#clearTestStatuses();
     const inOrder = this.hasAttribute("in-order");
     const beforeHooks = this.#hooks.get(BEFOREALL);
@@ -705,6 +746,9 @@ var CodeTestsElement = class extends HTMLElement {
         beforeAllHookElement.classList.add("running");
         beforeAllHookElement.part.add("running");
         for (const [hook, ids] of beforeHooks) {
+          if (this.#isCanceled == true) {
+            throw new Error("Test has been cancelled");
+          }
           hookResult = await hook(this, beforeAllHookElement);
           this.#handleHookResult(hookResult, true, "before");
         }
@@ -716,6 +760,7 @@ var CodeTestsElement = class extends HTMLElement {
         this.#continueRunningTests = false;
         this.classList.remove("running");
         this.part.remove("running");
+        this.findElement("play-button-label").textContent = "Run Tests";
         this.dispatchEvent(new CustomEvent("afterall" /* AfterAll */, { bubbles: true, composed: true }));
         return;
       }
@@ -737,6 +782,7 @@ var CodeTestsElement = class extends HTMLElement {
     if (this.#continueRunningTests == false) {
       this.classList.remove("running");
       this.part.remove("running");
+      this.findElement("play-button-label").textContent = "Run Tests";
       this.dispatchEvent(new CustomEvent("afterall" /* AfterAll */, { bubbles: true, composed: true }));
       return;
     }
@@ -748,6 +794,9 @@ var CodeTestsElement = class extends HTMLElement {
         afterAllHookElement.classList.add("running");
         afterAllHookElement.part.add("running");
         for (const [hook, ids] of afterHooks) {
+          if (this.#isCanceled == true) {
+            throw new Error("Test has been cancelled");
+          }
           hookResult = await hook(this, afterAllHookElement);
           this.#handleHookResult(hookResult, true, "after");
         }
@@ -759,6 +808,7 @@ var CodeTestsElement = class extends HTMLElement {
         this.#continueRunningTests = false;
         this.classList.remove("running");
         this.part.remove("running");
+        this.findElement("play-button-label").textContent = "Run Tests";
         this.dispatchEvent(new CustomEvent("afterall" /* AfterAll */, { bubbles: true, composed: true }));
         return;
       }
@@ -767,6 +817,7 @@ var CodeTestsElement = class extends HTMLElement {
     this.setAttribute("success", failedTests.length == 0 ? "true" : "false");
     this.classList.remove("running");
     this.part.remove("running");
+    this.findElement("play-button-label").textContent = "Run Tests";
     this.dispatchEvent(new CustomEvent("afterall" /* AfterAll */, { bubbles: true, composed: true }));
   }
   #clearTestStatuses() {
@@ -819,36 +870,43 @@ var CodeTestsElement = class extends HTMLElement {
     let testType;
     try {
       const allowTest = this.dispatchEvent(new CustomEvent("beforetest" /* BeforeTest */, { bubbles: true, cancelable: true, composed: true, detail: { testElement } }));
-      if (allowTest == true) {
-        const beforeHooks = this.#hooks.get(BEFOREEACH);
-        if (beforeHooks != null) {
-          for (const [hook, ids] of beforeHooks) {
-            if (ids.has(testId)) {
-              beforeResult = await hook(this, testElement);
-              break;
-            }
+      if (allowTest == false || this.#isCanceled == true) {
+        throw new Error("Test has been cancelled");
+      }
+      const beforeHooks = this.#hooks.get(BEFOREEACH);
+      if (beforeHooks != null) {
+        for (const [hook, ids] of beforeHooks) {
+          if (ids.has(testId)) {
+            beforeResult = await hook(this, testElement);
+            break;
           }
         }
-        testResult = await test(this, testElement);
-        const afterHooks = this.#hooks.get(AFTEREACH);
-        if (afterHooks != null) {
-          for (const [hook, ids] of afterHooks) {
-            if (ids.has(testId)) {
-              afterResult = await hook(this, testElement);
-              break;
-            }
+      }
+      if (this.#isCanceled == true) {
+        throw new Error("Test has been cancelled");
+      }
+      testResult = await test(this, testElement);
+      if (this.#isCanceled == true) {
+        throw new Error("Test has been cancelled");
+      }
+      const afterHooks = this.#hooks.get(AFTEREACH);
+      if (afterHooks != null) {
+        for (const [hook, ids] of afterHooks) {
+          if (ids.has(testId)) {
+            afterResult = await hook(this, testElement);
+            break;
           }
         }
-        testType = "before";
-        if (beforeResult != NOTESTDEFINED) {
-          this.#handleTestResult(testElement, beforeResult, true, void 0, testType);
-        }
-        testType = void 0;
-        this.#handleTestResult(testElement, testResult, true, void 0, testType);
-        testType = "after";
-        if (afterResult != NOTESTDEFINED) {
-          this.#handleTestResult(testElement, afterResult, true, void 0, testType);
-        }
+      }
+      testType = "before";
+      if (beforeResult != NOTESTDEFINED) {
+        this.#handleTestResult(testElement, beforeResult, true, void 0, testType);
+      }
+      testType = void 0;
+      this.#handleTestResult(testElement, testResult, true, void 0, testType);
+      testType = "after";
+      if (afterResult != NOTESTDEFINED) {
+        this.#handleTestResult(testElement, afterResult, true, void 0, testType);
       }
     } catch (error) {
       this.#handleTestResult(testElement, testResult, false, error, testType);
@@ -927,7 +985,6 @@ Result:${objectResult.value}`,
   }
   static create(properties) {
     const element = document.createElement("code-tests");
-    console.log(properties);
     return element;
   }
   #tests = /* @__PURE__ */ new Map();

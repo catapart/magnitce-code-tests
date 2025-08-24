@@ -42,6 +42,7 @@ declare class CodeTestsElement extends HTMLElement {
     connectedCallback(): void;
     disconnectedCallback(): void;
     loadTests(testsPath?: string): Promise<void>;
+    cancel(): void;
     runTests(): Promise<void>;
     static create(properties: CodeTestsProperties): HTMLElement;
     static observedAttributes: string[];

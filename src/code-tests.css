@@ -80,6 +80,7 @@
     --surface-button: var(--uchu-blue); /* --uchu-blue: #3984f2 */
     --surface-button-hover: var(--uchu-light-blue);
     --surface-button-active: var(--uchu-dark-blue);
+    --surface-button-cancel: var(--uchu-dark-blue);
 
     --border-test: solid 1px var(--uchu-dark-gray);
     --border-hook: solid 1px var(--uchu-dark-purple);
@@ -173,6 +174,26 @@ summary::before
 {
     transform: rotate(0);
     /* background: var(--surface-test-summary); */
+}
+
+:host(.running) .run[data-all]
+{
+    background-color: var(--surface-test-summary);
+    border-color: var(--surface-test-summary);
+}
+:host(.running) .run[data-all]:hover
+{
+    background-color: var(--uchu-dark-gray);
+    border-color: var(--uchu-dark-gray);
+}
+:host(.running) .run[data-all]:active
+{
+    background-color: var(--surface-test);
+    border-color: var(--surface-test);
+}
+:host(.running) .run[data-all]::before
+{
+    display: none;
 }
 
 #before-all-summary
