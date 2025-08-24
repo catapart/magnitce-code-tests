@@ -1,5 +1,11 @@
 # @magnit-ce/code-tests
 
+## 0.0.10
+
+### Patch Changes
+
+- 8ff61a1: fixed issue with spinner not respecting icon size
+
 ## 0.0.9
 
 ### Patch Changes
