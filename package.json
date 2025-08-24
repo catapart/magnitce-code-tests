@@ -1,6 +1,6 @@
 {
   "name": "@magnit-ce/code-tests",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "description": "A custom html element that interprets and runs tests in a browser.",
   "type": "module",
   "main": "dist/code-tests.js",

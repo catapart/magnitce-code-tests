@@ -1,5 +1,11 @@
 # @magnit-ce/code-tests
 
+## 0.0.12
+
+### Patch Changes
+
+- c311147: added required before and after any hooks
+
 ## 0.0.11
 
 ### Patch Changes
