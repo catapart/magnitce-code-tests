@@ -1,3 +1,5 @@
+import { CodeTestsElement } from "./code-tests";
+
 export abstract class TestResultComparers
 {
     static async toBeDefined(valueName?: string)
@@ -96,7 +98,7 @@ export class TestPromise<T> extends Promise<T>
 }
 export type TestResult = { success: boolean, expected: any, value: any; };
 export type TestResultType = void|undefined|string|TestResult|HTMLElement;
-export type Test = <T extends TestResultType>(...args: any[]) => T|Promise<T>;
+export type Test = <T extends TestResultType>(host: CodeTestsElement, parent: HTMLElement) => T|Promise<T>;
 export type Tests = { [key: string|symbol]: Test };
 export const BEFOREALL = Symbol("beforeAll");
 export const BEFOREEACH = Symbol("beforeEach");
@@ -156,6 +158,86 @@ export class CodeTests
         });
         return promise;
     }
+
+    static async prompt(host: CodeTestsElement, parent: HTMLElement, message: string, options?: PromptOptions)
+    {
+        return new Promise<boolean>((resolve, reject) =>
+        {
+            const template = host.findElement<HTMLTemplateElement>('prompt-template');
+            const promptElement = CodeTests.createElementFromTemplate(template);
+            promptElement.querySelector('.label')!.textContent = message;
+
+            
+            const clickHandler = (event: Event) =>
+            {
+                const composedPath = event.composedPath();
+                
+                const acceptButton = composedPath.find(item => item instanceof HTMLButtonElement && item.classList.contains('accept'));
+                if(acceptButton != null)
+                {
+                    const result = options?.onAccept?.() ?? true;
+                    promptElement.removeEventListener('click', clickHandler);
+                    resolve(result);
+                    return;
+                }
+                
+                const rejectButton = composedPath.find(item => item instanceof HTMLButtonElement && item.classList.contains('reject'));
+                if(rejectButton != null)
+                {
+                    const result = options?.onReject?.() ?? false;
+                    promptElement.removeEventListener('click', clickHandler);
+                    resolve(result);
+                    return;
+                }
+            }
+            promptElement.addEventListener('click', clickHandler);
+
+            if(options?.acceptLabel != null)
+            {
+                promptElement.querySelector('.accept')!.textContent = options.acceptLabel;
+            }
+            if(options?.rejectLabel != null)
+            {
+                promptElement.querySelector('.reject')!.textContent = options.rejectLabel;
+            }
+            
+            const details = parent instanceof HTMLDetailsElement
+            ? parent
+            : parent.querySelector<HTMLDetailsElement>('.test-details');
+            if(details != null)
+            {
+                details.open = true;
+            }
+            parent.querySelector('.result')?.append(promptElement);
+        });
+    }
+
+    
+    static createElementFromTemplate(target: string|HTMLTemplateElement, parent?: HTMLElement)
+    {
+        const templateNode =((target instanceof HTMLTemplateElement) ? target : document.querySelector<HTMLTemplateElement>(target));
+        if(templateNode == null)
+        {
+            throw new Error(`Unable to find template element from selector: ${target}`);
+        }
+        const firstChild = (templateNode.content.cloneNode(true) as HTMLElement).querySelector<HTMLElement>('*');
+        if(firstChild == null)
+        {
+            throw new Error(`Unable to find first child of template element`);
+        }
+
+        parent?.append(firstChild);
+
+        return firstChild;
+    }
 }
 
 export function expect(value: any) { return CodeTests.expect(value); }
+
+export type PromptOptions = {
+    acceptLabel?: string,
+    rejectLabel?: string,
+    onAccept?: () => void,
+    onReject?: () => void
+};
+export function prompt(host: CodeTestsElement, parent: HTMLElement, message: string, options?: PromptOptions) { return CodeTests.prompt(host, parent, message, options); }

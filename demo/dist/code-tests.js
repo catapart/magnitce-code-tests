@@ -360,7 +360,7 @@ pre\r
 }`;
 
 // src/code-tests.html?raw
-var code_tests_default2 = '<slot name="header">\r\n    <header id="header">\r\n        <span id="title"><slot name="title"><span id="title-text">Tests</span></slot></span>\r\n        <slot name="play-button">\r\n            <button type="button" class="run" data-all>\r\n                <slot name="play-button-label">\r\n                    <span id="play-button-label" class="button-label label icon">Run Tests</span>\r\n                </slot>\r\n            </button>\r\n        </slot>\r\n        <slot name="details"></slot>\r\n    </header>\r\n</slot>\r\n<details id="before-all-details" class="hook">\r\n    <summary id="before-all-summary">\r\n        <span id="before-all-result-icon" class="result-icon"></span>\r\n        <span id="before-all-description" class="description">Results from Before All Hook</span>\r\n    </summary>\r\n    <div id="before-all-results" class="results"></div>\r\n</details>\r\n<ul id="tests"></ul>\r\n<details id="after-all-details" class="hook">\r\n    <summary id="after-all-summary">\r\n        <span id="after-all-result-icon" class="result-icon"></span>\r\n        <span id="after-all-description" class="description">Results from After All Hook</span>\r\n    </summary>\r\n    <div id="after-all-results" class="results"></div>\r\n</details>';
+var code_tests_default2 = '<slot name="header">\r\n    <header id="header">\r\n        <span id="title"><slot name="title"><span id="title-text">Tests</span></slot></span>\r\n        <slot name="play-button">\r\n            <button type="button" class="run" data-all>\r\n                <slot name="play-button-label">\r\n                    <span id="play-button-label" class="button-label label icon">Run Tests</span>\r\n                </slot>\r\n            </button>\r\n        </slot>\r\n        <slot name="details"></slot>\r\n    </header>\r\n</slot>\r\n<details id="before-all-details" class="hook">\r\n    <summary id="before-all-summary">\r\n        <span id="before-all-result-icon" class="result-icon"></span>\r\n        <span id="before-all-description" class="description">Results from Before All Hook</span>\r\n    </summary>\r\n    <div id="before-all-results" class="results"></div>\r\n</details>\r\n<ul id="tests"></ul>\r\n<details id="after-all-details" class="hook">\r\n    <summary id="after-all-summary">\r\n        <span id="after-all-result-icon" class="result-icon"></span>\r\n        <span id="after-all-description" class="description">Results from After All Hook</span>\r\n    </summary>\r\n    <div id="after-all-results" class="results"></div>\r\n</details>\r\n\r\n<template id="prompt-template">\r\n    <div class="prompt" part="prompt">\r\n        <div class="prompt-display">\r\n            <span class="icon prompt-icon"></span>\r\n            <span class="label prompt-label"></span>\r\n        </div>\r\n        <div class="prompt-actions">\r\n            <button class="prompt-button accept" type="button">Accept</button>\r\n            <button class="prompt-button reject" type="button">Reject</button>\r\n        </div>\r\n    </div>\r\n</template>';
 
 // src/api.ts
 var TestPromise = class extends Promise {
@@ -396,7 +396,7 @@ var BEFOREALL = Symbol("beforeAll");
 var BEFOREEACH = Symbol("beforeEach");
 var AFTERALL = Symbol("afterAll");
 var AFTEREACH = Symbol("afterEach");
-var CodeTests = class {
+var CodeTests = class _CodeTests {
   static timeoutMS = 500;
   static #expectInterval;
   static #expectPromise;
@@ -433,9 +433,60 @@ var CodeTests = class {
     });
     return promise;
   }
+  static async prompt(host, parent, message, options) {
+    return new Promise((resolve, reject) => {
+      const template = host.findElement("prompt-template");
+      const promptElement = _CodeTests.createElementFromTemplate(template);
+      promptElement.querySelector(".label").textContent = message;
+      const clickHandler = (event) => {
+        const composedPath = event.composedPath();
+        const acceptButton = composedPath.find((item) => item instanceof HTMLButtonElement && item.classList.contains("accept"));
+        if (acceptButton != null) {
+          const result = options?.onAccept?.() ?? true;
+          promptElement.removeEventListener("click", clickHandler);
+          resolve(result);
+          return;
+        }
+        const rejectButton = composedPath.find((item) => item instanceof HTMLButtonElement && item.classList.contains("reject"));
+        if (rejectButton != null) {
+          const result = options?.onReject?.() ?? false;
+          promptElement.removeEventListener("click", clickHandler);
+          resolve(result);
+          return;
+        }
+      };
+      promptElement.addEventListener("click", clickHandler);
+      if (options?.acceptLabel != null) {
+        promptElement.querySelector(".accept").textContent = options.acceptLabel;
+      }
+      if (options?.rejectLabel != null) {
+        promptElement.querySelector(".reject").textContent = options.rejectLabel;
+      }
+      const details = parent instanceof HTMLDetailsElement ? parent : parent.querySelector(".test-details");
+      if (details != null) {
+        details.open = true;
+      }
+      parent.querySelector(".result")?.append(promptElement);
+    });
+  }
+  static createElementFromTemplate(target, parent) {
+    const templateNode = target instanceof HTMLTemplateElement ? target : document.querySelector(target);
+    if (templateNode == null) {
+      throw new Error(`Unable to find template element from selector: ${target}`);
+    }
+    const firstChild = templateNode.content.cloneNode(true).querySelector("*");
+    if (firstChild == null) {
+      throw new Error(`Unable to find first child of template element`);
+    }
+    parent?.append(firstChild);
+    return firstChild;
+  }
 };
 function expect(value) {
   return CodeTests.expect(value);
+}
+function prompt(host, parent, message, options) {
+  return CodeTests.prompt(host, parent, message, options);
 }
 
 // node_modules/.pnpm/ce-part-utils@0.0.0/node_modules/ce-part-utils/dist/ce-part-utils.js
@@ -654,7 +705,7 @@ var CodeTestsElement = class extends HTMLElement {
         beforeAllHookElement.classList.add("running");
         beforeAllHookElement.part.add("running");
         for (const [hook, ids] of beforeHooks) {
-          hookResult = await hook();
+          hookResult = await hook(this, beforeAllHookElement);
           this.#handleHookResult(hookResult, true, "before");
         }
         beforeAllHookElement.part.remove("running");
@@ -697,7 +748,7 @@ var CodeTestsElement = class extends HTMLElement {
         afterAllHookElement.classList.add("running");
         afterAllHookElement.part.add("running");
         for (const [hook, ids] of afterHooks) {
-          hookResult = await hook();
+          hookResult = await hook(this, afterAllHookElement);
           this.#handleHookResult(hookResult, true, "after");
         }
         afterAllHookElement.part.remove("running");
@@ -773,17 +824,17 @@ var CodeTestsElement = class extends HTMLElement {
         if (beforeHooks != null) {
           for (const [hook, ids] of beforeHooks) {
             if (ids.has(testId)) {
-              beforeResult = await hook();
+              beforeResult = await hook(this, testElement);
               break;
             }
           }
         }
-        testResult = await test();
+        testResult = await test(this, testElement);
         const afterHooks = this.#hooks.get(AFTEREACH);
         if (afterHooks != null) {
           for (const [hook, ids] of afterHooks) {
             if (ids.has(testId)) {
-              afterResult = await hook();
+              afterResult = await hook(this, testElement);
               break;
             }
           }
@@ -1048,5 +1099,6 @@ export {
   CodeTestEventType,
   CodeTests,
   CodeTestsElement,
-  expect
+  expect,
+  prompt
 };

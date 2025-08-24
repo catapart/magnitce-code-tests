@@ -14,8 +14,17 @@ declare class CodeTests {
     static expect<T>(value: T): TestPromise<T>;
     static expectSync<T>(value: T): TestPromise<T>;
     static expectBefore<T>(value: T): TestPromise<T>;
+    static prompt(host: CodeTestsElement, parent: HTMLElement, message: string, options?: PromptOptions): Promise<boolean>;
+    static createElementFromTemplate(target: string | HTMLTemplateElement, parent?: HTMLElement): HTMLElement;
 }
 declare function expect(value: any): TestPromise<any>;
+type PromptOptions = {
+    acceptLabel?: string;
+    rejectLabel?: string;
+    onAccept?: () => void;
+    onReject?: () => void;
+};
+declare function prompt(host: CodeTestsElement, parent: HTMLElement, message: string, options?: PromptOptions): Promise<boolean>;
 
 type CodeTestsProperties = {};
 declare enum CodeTestEventType {
@@ -39,4 +48,4 @@ declare class CodeTestsElement extends HTMLElement {
     attributeChangedCallback(attributeName: string, oldValue: string, newValue: string): void;
 }
 
-export { AFTERALL, AFTEREACH, BEFOREALL, BEFOREEACH, CodeTestEventType, CodeTests, CodeTestsElement, type CodeTestsProperties, expect };
+export { AFTERALL, AFTEREACH, BEFOREALL, BEFOREEACH, CodeTestEventType, CodeTests, CodeTestsElement, type CodeTestsProperties, expect, prompt };

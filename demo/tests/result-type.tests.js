@@ -1,6 +1,24 @@
-import { expect } from '../dist/code-tests.js';
+import { expect, prompt } from '../dist/code-tests.js';
 
 export default {
+    'should await prompt response': async (host, parent) =>
+    {
+        const testResult = await prompt(host, parent, "Is the test awaiting the user's interaction?");
+
+        const duplicateResult = await prompt(host, parent, "Does a second prompt await the user's interaction?", 
+        {
+            acceptLabel: "Yes",
+            rejectLabel: "No",
+            onAccept: () =>
+            {
+                return true;
+            }, 
+            onReject: () => { return { success: false, error: "The code tests element was observed to skip waiting for the user's interaction." }; }
+        });
+
+        await expect(testResult).toBe(true);
+        await expect(duplicateResult).toBe(true);
+    },
     'should allow undefined results': async () =>
     {
         console.log("Passed!");

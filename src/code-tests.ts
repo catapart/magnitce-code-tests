@@ -1,6 +1,6 @@
 import { default as style } from './code-tests.css?raw';
 import { default as html } from './code-tests.html?raw';
-import { AFTERALL, AFTEREACH, BEFOREALL, BEFOREEACH, CodeTests, expect, Test, TestResultType, Tests } from './api';
+import { AFTERALL, AFTEREACH, BEFOREALL, BEFOREEACH, CodeTests, expect, prompt, Test, TestResultType, Tests } from './api';
 import { assignClassAndIdToPart } from 'ce-part-utils';
 
 export type CodeTestsProperties = 
@@ -286,7 +286,7 @@ export class CodeTestsElement extends HTMLElement
                 beforeAllHookElement.part.add('running');
                 for(const [hook, ids] of beforeHooks)
                 {
-                    hookResult = await hook();
+                    hookResult = await hook(this, beforeAllHookElement);
                     this.#handleHookResult(hookResult, true, 'before');
                 }
                 beforeAllHookElement.part.remove('running');
@@ -340,7 +340,7 @@ export class CodeTestsElement extends HTMLElement
                 afterAllHookElement.part.add('running');
                 for(const [hook, ids] of afterHooks)
                 {
-                    hookResult = await hook();
+                    hookResult = await hook(this, afterAllHookElement);
                     this.#handleHookResult(hookResult, true, 'after');
                 }
                 afterAllHookElement.part.remove('running');
@@ -442,13 +442,13 @@ export class CodeTestsElement extends HTMLElement
                     {
                         if(ids.has(testId))
                         {
-                            beforeResult = await hook();
+                            beforeResult = await hook(this, testElement);
                             break;
                         }
                     }
                 }
 
-                testResult = await test();
+                testResult = await test(this, testElement);
 
                 const afterHooks = this.#hooks.get(AFTEREACH);
                 if(afterHooks != null)
@@ -457,7 +457,7 @@ export class CodeTestsElement extends HTMLElement
                     {
                         if(ids.has(testId))
                         {
-                            afterResult = await hook();
+                            afterResult = await hook(this, testElement);
                             break;
                         }
                     }
@@ -800,6 +800,7 @@ export
 { 
     CodeTests,
     expect,
+    prompt,
     BEFOREALL,
     BEFOREEACH,
     AFTERALL,

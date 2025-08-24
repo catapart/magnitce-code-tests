@@ -1,4 +1,4 @@
-import { expect } from '../dist/code-tests.js';
+import { expect, prompt } from '../dist/code-tests.js';
 
 export default {
     'should have access to the console api': async () =>
