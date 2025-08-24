@@ -14,6 +14,7 @@ export enum CodeTestEventType
     AfterAll = 'afterall',
     BeforeTest = 'beforetest',
     AfterTest = 'aftertest',
+    Cancel = 'cancel',
 }
 
 const NOTESTDEFINED = Symbol('No Test Defined');
@@ -283,6 +284,8 @@ export class CodeTestsElement extends HTMLElement
         this.#isCanceled = true;
         this.classList.add('canceled');
         this.part.add('canceled');
+
+        this.dispatchEvent(new CustomEvent(CodeTestEventType.Cancel, { bubbles: true, composed: true }));
     }
 
     async runTests()

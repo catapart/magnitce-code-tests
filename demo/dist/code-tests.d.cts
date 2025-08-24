@@ -31,7 +31,8 @@ declare enum CodeTestEventType {
     BeforeAll = "beforeall",
     AfterAll = "afterall",
     BeforeTest = "beforetest",
-    AfterTest = "aftertest"
+    AfterTest = "aftertest",
+    Cancel = "cancel"
 }
 declare class CodeTestsElement extends HTMLElement {
     #private;

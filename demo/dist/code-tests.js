@@ -90,6 +90,7 @@ var code_tests_default = `:host\r
     --border-process: solid 1px var(--uchu-dark-blue);\r
     --border-button: solid 1px var(--uchu-blue);\r
 \r
+    --success-icon: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%232e943a" d="M20.285 2l-11.285 11.567-5.286-5.011-3.714 3.716 9 8.728 15-15.285z"/></svg>');\r
     --info-icon: url('data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2022.812714%2022.814663%22%20version%3D%221.1%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20xmlns%3Asvg%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20style%3D%22fill%3Atransparent%3Bstroke%3Atransparent%3Bstroke-width%3A0.999999%3Bstroke-linejoin%3Around%3Bstroke-miterlimit%3A6.3%3Bstroke-dasharray%3Anone%3Bstroke-dashoffset%3A29.2913%3Bstroke-opacity%3A1%22%20d%3D%22M%2022.295505%2C11.407332%20A%2010.889144%2C10.889144%200%200%201%2011.406424%2C22.296479%2010.889144%2C10.889144%200%200%201%200.51720881%2C11.407332%2010.889144%2C10.889144%200%200%201%2011.406424%2C0.51818382%2010.889144%2C10.889144%200%200%201%2022.295505%2C11.407332%20Z%22%3E%3C%2Fpath%3E%3Cpath%20d%3D%22m%2013.945668%2C4.3053761%20c%200.150778%2C-0.96462%20-0.30687%2C-1.43709%20-1.36997%2C-1.43709%20-1.063%2C0%20-1.668452%2C0.47247%20-1.81923%2C1.43709%20-0.150779%2C0.96462%200.306971%2C1.43708%201.369971%2C1.43708%201.004%2C0%201.66845%2C-0.47246%201.819229%2C-1.43708%20z%20M%2011.693889%2C17.829726%2013.373994%2C7.0811161%20h%20-2.9333%20L%208.7605887%2C17.829726%20Z%22%20style%3D%22font-size%3A19.6861px%3Bfont-family%3APassageway%3B-inkscape-font-specification%3APassageway%3Bfill%3A%23a30d30%3Bstroke-width%3A2.5%3Bstroke-linejoin%3Around%3Bstroke-miterlimit%3A6.3%3Bstroke-dashoffset%3A29.2913%22%20aria-label%3D%22i%22%3E%3C%2Fpath%3E%3C%2Fsvg%3E');\r
 \r
     --font-text: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";\r
@@ -207,9 +208,9 @@ summary::before\r
 \r
 .result-icon\r
 {\r
-    --size: 24px;\r
-    width: var(--size);\r
-    height: var(--size);\r
+    --background-size: 24px;\r
+    width: var(--background-size);\r
+    height: var(--background-size);\r
 \r
     display: flex;\r
     align-items: center;\r
@@ -253,10 +254,10 @@ summary::before\r
 {\r
     border: var(--border-success);\r
     background: var(--surface-success)\r
-    url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%232e943a" d="M20.285 2l-11.285 11.567-5.286-5.011-3.714 3.716 9 8.728 15-15.285z"/></svg>');\r
+    var(--success-icon);\r
     background-repeat: no-repeat;\r
     background-position: center;\r
-    background-size: 16px 16px;\r
+    background-size: var(--icon-size, 16px) var(--icon-size, 16px);\r
 }\r
 .test.fail .result-icon\r
 ,.hook.fail .result-icon\r
@@ -277,13 +278,13 @@ summary::before\r
 ,.hook:is(.running) .result-icon::before\r
 {\r
     content: '';\r
-    --size: 18px;\r
+    --icon-size: 18px;\r
     --color: var(--text-process);\r
     --animation-timing-function: linear;\r
     --animation-duration: 2s;\r
-    width: var(--size);\r
-    height: var(--size);\r
-    mask-image: radial-gradient(circle at 50% 50%, transparent calc(var(--size) / 3), black calc(var(--size) / 3));\r
+    width: var(--icon-size);\r
+    height: var(--icon-size);\r
+    mask-image: radial-gradient(circle at 50% 50%, transparent calc(var(--icon-size) / 3), black calc(var(--icon-size) / 3));\r
     background-image: conic-gradient(transparent, transparent 135deg, var(--color));\r
     border-radius: 50%;\r
     animation: var(--animation-timing-function) var(--animation-duration) infinite spin;\r
@@ -529,6 +530,7 @@ var CodeTestEventType = /* @__PURE__ */ ((CodeTestEventType2) => {
   CodeTestEventType2["AfterAll"] = "afterall";
   CodeTestEventType2["BeforeTest"] = "beforetest";
   CodeTestEventType2["AfterTest"] = "aftertest";
+  CodeTestEventType2["Cancel"] = "cancel";
   return CodeTestEventType2;
 })(CodeTestEventType || {});
 var NOTESTDEFINED = Symbol("No Test Defined");
@@ -726,6 +728,7 @@ var CodeTestsElement = class extends HTMLElement {
     this.#isCanceled = true;
     this.classList.add("canceled");
     this.part.add("canceled");
+    this.dispatchEvent(new CustomEvent("cancel" /* Cancel */, { bubbles: true, composed: true }));
   }
   async runTests() {
     this.dispatchEvent(new CustomEvent("beforeall" /* BeforeAll */, { bubbles: true, composed: true }));
