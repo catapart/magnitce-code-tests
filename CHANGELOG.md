@@ -1,5 +1,11 @@
 # @magnit-ce/code-tests
 
+## 0.0.9
+
+### Patch Changes
+
+- 4651467: added cancel event dispatch and updated icon style variables
+
 ## 0.0.8
 
 ### Patch Changes
