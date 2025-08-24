@@ -586,22 +586,6 @@ var CodeTestsElement = class extends HTMLElement {
     return this.shadowRoot.getElementById(id);
   }
   #hooks = {};
-  // #hooks: Map<HookType, Map<Test, Set<string>>> = new Map();
-  // #hookIds: {
-  //     [HookType.BeforeAll]: string,
-  //     [HookType.AfterAll]: string,
-  //     [HookType.BeforeEach]: string,
-  //     [HookType.AfterEach]: string,
-  //     [HookType.RequiredBeforeAny]: string,
-  //     [HookType.RequiredAfterAny]: string,
-  // } = {
-  //     [HookType.BeforeAll]: generateId(),
-  //     [HookType.AfterAll]: generateId(),
-  //     [HookType.BeforeEach]: generateId(),
-  //     [HookType.AfterEach]: generateId(),
-  //     [HookType.RequiredBeforeAny]: generateId(),
-  //     [HookType.RequiredAfterAny]: generateId(),
-  // }
   #continueRunningTests = true;
   constructor() {
     super();
@@ -616,7 +600,7 @@ var CodeTestsElement = class extends HTMLElement {
     if (this.getAttribute("auto") == "false") {
       return;
     }
-    const testsPath = this.getAttribute("src") ?? this.getAttribute("test") ?? this.getAttribute("tests") ?? this.getAttribute("run") ?? this.getAttribute("path");
+    const testsPath = this.#getCurrentTestsPath();
     if (testsPath == null) {
       return;
     }
@@ -694,18 +678,18 @@ var CodeTestsElement = class extends HTMLElement {
       }
       const afterAll = tests["afterall" /* AfterAll */];
       if (afterAll != null) {
-        this.#hooks["afterall" /* AfterAll */] = beforeAll;
+        this.#hooks["afterall" /* AfterAll */] = afterAll;
         delete tests["afterall" /* AfterAll */];
         this.classList.add("has-after-hook");
       }
       const beforeEach = tests["beforeeach" /* BeforeEach */];
       if (beforeEach != null) {
-        this.#hooks["beforeeach" /* BeforeEach */] = beforeAll;
+        this.#hooks["beforeeach" /* BeforeEach */] = beforeEach;
         delete tests["beforeeach" /* BeforeEach */];
       }
       const afterEach = tests["aftereach" /* AfterEach */];
       if (afterEach != null) {
-        this.#hooks["aftereach" /* AfterEach */] = beforeAll;
+        this.#hooks["aftereach" /* AfterEach */] = afterEach;
         delete tests["aftereach" /* AfterEach */];
       }
       const requiredBeforeAny = tests["requiredbeforeany" /* RequiredBeforeAny */];
@@ -722,9 +706,8 @@ var CodeTestsElement = class extends HTMLElement {
         this.classList.add("has-required-after-hook");
         this.part.add("has-required-after-hook");
       }
-      console.log(tests);
       for (const [description, test] of Object.entries(tests)) {
-        const id = this.#addTest(description, test);
+        this.#addTest(description, test);
       }
     } catch (error) {
       this.#addProcessError("An error occurred while loading the tasks:", error);

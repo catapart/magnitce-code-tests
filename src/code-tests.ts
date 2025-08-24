@@ -178,20 +178,20 @@ export class CodeTestsElement extends HTMLElement
             const afterAll = tests[HookType.AfterAll];
             if(afterAll != null)
             {
-                this.#hooks[HookType.AfterAll] = beforeAll;
+                this.#hooks[HookType.AfterAll] = afterAll;
                 delete tests[HookType.AfterAll];
                 this.classList.add('has-after-hook');
             }
             const beforeEach = tests[HookType.BeforeEach];
             if(beforeEach != null)
             {
-                this.#hooks[HookType.BeforeEach] = beforeAll;
+                this.#hooks[HookType.BeforeEach] = beforeEach;
                 delete tests[HookType.BeforeEach];
             }
             const afterEach = tests[HookType.AfterEach];
             if(afterEach != null)
             {
-                this.#hooks[HookType.AfterEach] = beforeAll;
+                this.#hooks[HookType.AfterEach] = afterEach;
                 delete tests[HookType.AfterEach];
             }
             const requiredBeforeAny = tests[HookType.RequiredBeforeAny];
