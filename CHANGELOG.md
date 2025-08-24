@@ -1,5 +1,11 @@
 # @magnit-ce/code-tests
 
+## 0.0.6
+
+### Patch Changes
+
+- 2b49bcc: added prompt feature
+
 ## 0.0.5
 
 ### Patch Changes
