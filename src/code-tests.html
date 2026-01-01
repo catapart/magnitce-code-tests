@@ -4,6 +4,7 @@
         <slot name="play-button">
             <button type="button" class="run" data-all>
                 <slot name="play-button-label">
+                    <svg class="icon arrow-icon play-button-icon"><use href="#icon-definition_arrow"></use></svg>
                     <span id="play-button-label" class="button-label label icon">Run Tests</span>
                 </slot>
             </button>
@@ -13,6 +14,7 @@
 </slot>
 <details id="required-before-any-details" class="hook">
     <summary id="required-before-any-summary">
+        <svg class="icon arrow-icon"><use href="#icon-definition_arrow"></use></svg>
         <span id="required-before-any-result-icon" class="result-icon"></span>
         <span id="required-before-any-description" class="description">Results from Required Before Any Hook</span>
     </summary>
@@ -20,6 +22,7 @@
 </details>
 <details id="before-all-details" class="hook">
     <summary id="before-all-summary">
+        <svg class="icon arrow-icon"><use href="#icon-definition_arrow"></use></svg>
         <span id="before-all-result-icon" class="result-icon"></span>
         <span id="before-all-description" class="description">Results from Before All Hook</span>
     </summary>
@@ -28,6 +31,7 @@
 <ul id="tests"></ul>
 <details id="after-all-details" class="hook">
     <summary id="after-all-summary">
+        <svg class="icon arrow-icon"><use href="#icon-definition_arrow"></use></svg>
         <span id="after-all-result-icon" class="result-icon"></span>
         <span id="after-all-description" class="description">Results from After All Hook</span>
     </summary>
@@ -35,6 +39,7 @@
 </details>
 <details id="required-after-any-details" class="hook">
     <summary id="required-after-any-summary">
+        <svg class="icon arrow-icon"><use href="#icon-definition_arrow"></use></svg>
         <span id="required-after-any-result-icon" class="result-icon"></span>
         <span id="required-after-any-description" class="description">Results from Required After Any Hook</span>
     </summary>
@@ -53,3 +58,14 @@
         </div>
     </div>
 </template>
+<div id="icon-definitions">
+    <svg id="icon-definition_arrow" viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'>
+        <g stroke-width='0'></g>
+        <g stroke-linecap='round' stroke-linejoin='round'></g>
+        <g>
+            <path 
+            fill="var(--fill-color, currentcolor)"
+            d='M8.72798 15.795L3.72798 7.795C3.10356 6.79593 3.82183 5.5 4.99998 5.5L15 5.5C16.1781 5.5 16.8964 6.79593 16.272 7.795L11.272 15.795C10.6845 16.735 9.31549 16.735 8.72798 15.795Z'></path>
+        </g>
+    </svg>
+</div>

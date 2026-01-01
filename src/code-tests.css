@@ -64,6 +64,7 @@
     --text-result: var(--uchu-yang); /* --uchu-yang: #fdfdfd; */
     --text-collapse-icon: var(--uchu-dark-gray);  /* --uchu-dark-gray: #878a8b; */
     --text-hook-summary: var(--uchu-dark-purple);
+    --text-hook-any-summary: var(--uchu-dark-blue);
     --text-success: var(--uchu-dark-green); /* --uchu-dark-green: #2e943a; */
     --text-fail: var(--uchu-dark-red); /* --uchu-dark-red: #a30d30; */
     --text-process: var(--uchu-dark-blue); /* --uchu-dark-blue: #0949ac; */
@@ -74,6 +75,7 @@
     --surface-test: var(--uchu-yang);
     --surface-test-summary: var(--uchu-gray);
     --surface-hook-summary: var(--uchu-light-purple);
+    --surface-hook-any-summary: var(--uchu-light-blue);
     --surface-success: var(--uchu-light-green);
     --surface-fail: var(--uchu-light-red);
     --surface-process: var(--uchu-light-blue);
@@ -84,10 +86,13 @@
 
     --border-test: solid 1px var(--uchu-dark-gray);
     --border-hook: solid 1px var(--uchu-dark-purple);
+    --border-hook-any: solid 1px var(--uchu-dark-blue);
     --border-success: solid 1px var(--uchu-dark-green);
     --border-fail: solid 1px var(--uchu-dark-red);
     --border-process: solid 1px var(--uchu-dark-blue);
     --border-button: solid 1px var(--uchu-blue);
+
+    --arrow-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' class='icon arrow-icon'%3E%3Cuse href='%23icon-definition_arrow'%3E%3C/use%3E%3C/svg%3E");
 
     --success-icon: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%232e943a" d="M20.285 2l-11.285 11.567-5.286-5.011-3.714 3.716 9 8.728 15-15.285z"/></svg>');
     --info-icon: url('data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2022.812714%2022.814663%22%20version%3D%221.1%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20xmlns%3Asvg%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20style%3D%22fill%3Atransparent%3Bstroke%3Atransparent%3Bstroke-width%3A0.999999%3Bstroke-linejoin%3Around%3Bstroke-miterlimit%3A6.3%3Bstroke-dasharray%3Anone%3Bstroke-dashoffset%3A29.2913%3Bstroke-opacity%3A1%22%20d%3D%22M%2022.295505%2C11.407332%20A%2010.889144%2C10.889144%200%200%201%2011.406424%2C22.296479%2010.889144%2C10.889144%200%200%201%200.51720881%2C11.407332%2010.889144%2C10.889144%200%200%201%2011.406424%2C0.51818382%2010.889144%2C10.889144%200%200%201%2022.295505%2C11.407332%20Z%22%3E%3C%2Fpath%3E%3Cpath%20d%3D%22m%2013.945668%2C4.3053761%20c%200.150778%2C-0.96462%20-0.30687%2C-1.43709%20-1.36997%2C-1.43709%20-1.063%2C0%20-1.668452%2C0.47247%20-1.81923%2C1.43709%20-0.150779%2C0.96462%200.306971%2C1.43708%201.369971%2C1.43708%201.004%2C0%201.66845%2C-0.47246%201.819229%2C-1.43708%20z%20M%2011.693889%2C17.829726%2013.373994%2C7.0811161%20h%20-2.9333%20L%208.7605887%2C17.829726%20Z%22%20style%3D%22font-size%3A19.6861px%3Bfont-family%3APassageway%3B-inkscape-font-specification%3APassageway%3Bfill%3A%23a30d30%3Bstroke-width%3A2.5%3Bstroke-linejoin%3Around%3Bstroke-miterlimit%3A6.3%3Bstroke-dashoffset%3A29.2913%22%20aria-label%3D%22i%22%3E%3C%2Fpath%3E%3C%2Fsvg%3E');
@@ -141,9 +146,8 @@
 #required-before-any-summary
 ,#required-after-any-summary
 {
-    background: var(--surface-process);
-    color: var(--text-process);
-    border: solid 1px var(--text-process);
+    background: var(--surface-hook-any-summary);
+    color: var(--text-hook-any-summary);
     grid-template-columns: auto auto 1fr;
 }
 
@@ -164,19 +168,17 @@ summary
     padding: var(--small-spacer) var(--spacer);
     align-items: center;
 }
-summary::before
+summary > .arrow-icon
 {
-    content: '';
-    width: 16px;
-    height: 16px;
-    background: url("data:image/svg+xml,%3Csvg%20viewBox%3D'0%200%2020%2020'%20width%3D'14px'%20height%3D'14px'%20fill%3D'none'%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%3E%3Cg%20stroke-width%3D'0'%3E%3C%2Fg%3E%3Cg%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%3C%2Fg%3E%3Cg%3E%3Cpath%20d%3D'M8.72798%2015.795L3.72798%207.795C3.10356%206.79593%203.82183%205.5%204.99998%205.5L15%205.5C16.1781%205.5%2016.8964%206.79593%2016.272%207.795L11.272%2015.795C10.6845%2016.735%209.31549%2016.735%208.72798%2015.795Z'%20fill%3D'%23878a8b'%3E%3C%2Fpath%3E%3C%2Fg%3E%3C%2Fsvg%3E");
+    width: 14px;
+    height: 14px;
+    background: var(--arrow-icon);
     transform: rotate(-90deg);
     transition: transform ease-out 200ms;
 }
-[open] > summary::before
+details[open] > summary > .arrow-icon
 {
     transform: rotate(0);
-    /* background: var(--surface-test-summary); */
 }
 
 :host(.running) .run[data-all]
@@ -235,8 +237,19 @@ summary::before
 ,#before-all-details
 ,#after-all-details
 {
-    border: var(--border-test);
     border-radius: 2px;
+    overflow: hidden;
+}
+
+#required-before-any-details.hook
+,#required-after-any-details.hook
+{
+    border: var(--border-hook-any);
+}
+
+.test
+{
+    border: var(--border-test);
 }
 
 .test summary
@@ -332,6 +345,12 @@ summary::before
     padding: var(--small-spacer) var(--spacer);
 }
 
+code
+{
+    overflow: auto;
+    display: block;
+}
+
 pre
 {
     margin: var(--small-spacer);
@@ -343,9 +362,11 @@ pre
     min-width: auto;
     max-width: auto;
     appearance: none;
-    display: inline-flex;
+    display: inline-grid;
+    grid-template-columns: auto 1fr;
     justify-content: center;
     align-items: center;
+    text-align: center;
     padding: 3px 10px 3px 7px;
     font-size: 11px;
     gap: var(--small-spacer);
@@ -363,17 +384,18 @@ pre
 {
     background: oklch(50.39% 0.181 258.33);
 }
-.run::before
+
+.run .play-button-icon
 {
-    content: '';
-    display: block;
     width: 16px;
     height: 16px;
     transform: rotate(-90deg);
-    background: 
-    url("data:image/svg+xml,%3Csvg%20viewBox%3D'0%200%2020%2020'%20width%3D'16px'%20height%3D'16px'%20fill%3D'none'%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%3E%3Cg%20stroke-width%3D'0'%3E%3C%2Fg%3E%3Cg%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%3C%2Fg%3E%3Cg%3E%3Cpath%20d%3D'M8.72798%2015.795L3.72798%207.795C3.10356%206.79593%203.82183%205.5%204.99998%205.5L15%205.5C16.1781%205.5%2016.8964%206.79593%2016.272%207.795L11.272%2015.795C10.6845%2016.735%209.31549%2016.735%208.72798%2015.795Z'%20fill%3D'%23fdfdfd'%3E%3C%2Fpath%3E%3C%2Fg%3E%3C%2Fsvg%3E");
 }
 
+#icon-definitions
+{
+    display: none;
+}
 
 @media (prefers-color-scheme: dark) 
 {

@@ -631,6 +631,7 @@ export class CodeTestsElement extends HTMLElement
     }
     #handleTestResult(testElement: HTMLElement, result: TestResultType, finishedTest: boolean, error?: Error, beforeOrAfter?: 'before'|'after')
     {
+        console.log(result);
         if(result instanceof HTMLElement)
         {
             this.#setTestResult(testElement, result, finishedTest, beforeOrAfter);
@@ -659,7 +660,7 @@ export class CodeTestsElement extends HTMLElement
                 `${(objectResult.success == true) ? `${trueMessage}:` : `${falseMessage}:`}\nExpected:${objectResult.expected}\nResult:${objectResult.value}`,
                 objectResult.success,
                 beforeOrAfter);
-                this.#setTestResult(testElement, defaultResult, finishedTest, beforeOrAfter);
+                this.#setTestResult(testElement, defaultResult, objectResult.success, beforeOrAfter);
             }
         }
 
@@ -739,6 +740,7 @@ export class CodeTestsElement extends HTMLElement
         const summaryElement = document.createElement('summary');
         summaryElement.classList.add('test-summary');
         summaryElement.part.add('test-summary');
+        summaryElement.innerHTML = `<svg class="icon arrow-icon"><use href="#icon-definition_arrow"></use></svg>`;
 
         const resultIcon = document.createElement('div');
         resultIcon.classList.add('result-icon');
@@ -753,7 +755,9 @@ export class CodeTestsElement extends HTMLElement
         const runButton = document.createElement('button');
         runButton.classList.add('run', 'test-run');
         runButton.part.add('run', 'test-run');
-        runButton.textContent = 'Run Test';
+        // runButton.textContent = 'Run Test';
+        runButton.innerHTML = `<svg class="icon arrow-icon play-button-icon"><use href="#icon-definition_arrow"></use></svg>
+        <span class="button-label label icon">Run Tests</span>`;
         runButton.title = "Run Test";
         summaryElement.append(runButton);
 
