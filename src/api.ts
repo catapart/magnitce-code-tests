@@ -26,9 +26,9 @@ export abstract class TestResultComparers
             throw new Error(`  Value is not equal.\n  Expected: ${value}\n  Result: ${target}`);
         }
     }
-    static async toContainText(value: string)
+    static async toContainText(_value: string)
     {
-        const target = await this;
+        // const _target = await this;
 
     }
     static async toHaveAttribute(value: string)
@@ -47,7 +47,7 @@ export abstract class TestResultComparers
     }
 }
 
-export class ExpectedValue<T>
+export class ExpectedValue
 {
     toBeDefined(valueName?: string) { return TestResultComparers.toBeDefined(valueName); }
 }
@@ -76,9 +76,9 @@ export class TestPromise<T> extends Promise<T>
             throw new Error(`  Value is not equal.\n  Expected: ${value}\n  Result: ${target}`);
         }
     }
-    async toContainText(value: string)
+    async toContainText(_value: string)
     {
-        const target = await this;
+        // const target = await this;
 
     }
     async toHaveAttribute(value: string)
@@ -96,20 +96,16 @@ export class TestPromise<T> extends Promise<T>
         }
     }
 }
-export type TestResult = { success: boolean, expected: any, value: any; };
-export type TestResultType = void|undefined|string|TestResult|HTMLElement;
-export type Test = <T extends TestResultType>(host: CodeTestsElement, parent: HTMLElement) => T|Promise<T>;
-export type Tests = { [key: string|symbol]: Test };
 
 export class CodeTests
 {
     static timeoutMS = 500;
-    static #expectInterval?: ReturnType<typeof setInterval>;
-    static #expectPromise?: TestPromise<void>;
+    // static #expectInterval?: ReturnType<typeof setInterval>;
+    // static #expectPromise?: TestPromise<void>;
     static expect<T>(value: T)
     {
         
-        const promise = new TestPromise<T>(async (resolve, reject) =>
+        const promise = new TestPromise<T>(async (resolve, _reject) =>
         {
             if(value instanceof Promise)
             {
@@ -125,7 +121,7 @@ export class CodeTests
     static expectSync<T>(value: T)
     {
         
-        const promise = new TestPromise<T>(async (resolve, reject) =>
+        const promise = new TestPromise<T>(async (resolve, _reject) =>
         {
             if(value instanceof Promise)
             {
@@ -141,7 +137,7 @@ export class CodeTests
     static expectBefore<T>(value: T)
     {
         
-        const promise = new TestPromise<T>(async (resolve, reject) =>
+        const promise = new TestPromise<T>(async (resolve, _reject) =>
         {
             if(value instanceof Promise)
             {
@@ -157,7 +153,7 @@ export class CodeTests
 
     static async prompt(host: CodeTestsElement, parent: HTMLElement, message: string, options?: PromptOptions)
     {
-        return new Promise<boolean>((resolve, reject) =>
+        return new Promise<boolean>((resolve, _reject) =>
         {
             const template = host.findElement<HTMLTemplateElement>('prompt-template');
             const promptElement = CodeTests.createElementFromTemplate(template);

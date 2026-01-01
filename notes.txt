@@ -1,0 +1,30 @@
+## Hooks
+beforeAll:  
+beforeEach:  
+afterEach:  
+afterAll:  
+
+## Providers
+`export` a constant named `providers` to inject arbitrary objects into test calls
+
+## Events
+The `<code-tests>` element dispatches the following events:
+- `start`: 
+- `finish`: 
+
+## Attributes
+The `<code-tests>` element uses the `src` attribute.
+The  `test`, `tests`, `run`, and `path` attributes are aliases of the `src` attribute.
+
+The `success` attribute is assigned to `true` or `false` when tests have finished.
+
+## Styling
+The `<code-tests>` element can be styled with CSS, normally, but it also makes use of the shadowDOM for it's layout and functionality. Each of the elements in the `<code-tests>` element's shadowRoot can be selected for styling, directly, by using the `::part()` selector.
+
+In this example, the `header` part is being selected for styling:
+```css
+code-tests::part(header)
+{
+    /* styling */
+}
+```
