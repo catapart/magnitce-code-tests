@@ -96,4 +96,169 @@ export class TestManager
     {
         this.#tests.set(testId, test);
     }
+
+
+    async runBeforeAllHook()
+    {
+        // const beforeHook = this.#hooks[Hook.BeforeAll]
+        // if(beforeHook != null)
+        // {
+        //     let hookResult;
+        //     try
+        //     {
+        //         const beforeAllHookElement = this.findElement(`#before-all-details`);
+        //         beforeAllHookElement.classList.add('running');
+        //         beforeAllHookElement.part.add('running');
+
+        //         //@ts-expect-error ts doesn't understand that this value can change while awaiting
+        //         if(this.isCanceled == true) { throw new Error("Test has been cancelled"); }
+        //         hookResult = await beforeHook(this, beforeAllHookElement);
+
+        //         this.#handleHookResult(hookResult, true, 'before', false);
+        //         beforeAllHookElement.part.remove('running');
+        //         beforeAllHookElement.classList.remove('running');
+        //     }
+        //     catch(error)
+        //     {
+        //         this.#handleHookResult(hookResult, false, 'before', false, error as Error);
+        //         console.error(error);
+        //         this.#continueRunningTests = false;
+        //         this.classList.remove('running');
+        //         this.part.remove('running');
+        //         if(playButtonLabel != null)
+        //         {
+        //             playButtonLabel.textContent = "Run Tests";
+        //         }
+        //         this.dispatchEvent(new CustomEvent(CodeTestEvent.AfterAll, { bubbles: true, composed: true }));
+        //         return;
+        //     }
+        // }
+    }
+    async runAfterAllHook()
+    {
+        // const afterHook = this.#hooks[Hook.AfterAll];
+        // if(afterHook != null)
+        // {
+        //     let hookResult;
+        //     try
+        //     {
+        //         const afterAllHookElement = this.findElement(`#after-all-details`);
+        //         afterAllHookElement.classList.add('running');
+        //         afterAllHookElement.part.add('running');
+                
+        //         //@ts-expect-error ts doesn't understand that this value can change while awaiting
+        //         if(this.isCanceled == true) { throw new Error("Test has been cancelled"); }
+        //         hookResult = await afterHook(this, afterAllHookElement);
+        //         this.#handleHookResult(hookResult, true, 'after', false);
+
+        //         afterAllHookElement.part.remove('running');
+        //         afterAllHookElement.classList.remove('running');
+        //     }
+        //     catch(error)
+        //     {
+        //         this.#handleHookResult(hookResult, false, 'after', false, error as Error);
+        //         console.error(error);
+
+                
+        //         const requiredAfterHook = this.#hooks[Hook.RequiredAfterAny];
+        //         if(requiredAfterHook != null)
+        //         {
+        //             let hookResult;
+        //             try
+        //             {
+        //                 const requiredAfterAnyHookElement = this.findElement(`#required-after-any-details`);
+        //                 requiredAfterAnyHookElement.classList.add('running');
+        //                 requiredAfterAnyHookElement.part.add('running');
+
+        //                 //@ts-expect-error ts doesn't understand that this value can change while awaiting
+        //                 if(this.isCanceled == true) { throw new Error("Test has been cancelled"); }
+        //                 hookResult = await requiredAfterHook(this, requiredAfterAnyHookElement);
+
+        //                 this.#handleHookResult(hookResult, true, 'after', true);
+        //                 requiredAfterAnyHookElement.part.remove('running');
+        //                 requiredAfterAnyHookElement.classList.remove('running');
+        //             }
+        //             catch(error)
+        //             {
+        //                 this.#handleHookResult(hookResult, false, 'after', true, error as Error);
+        //                 console.error(error);
+        //             }
+        //         }
+
+        //         this.#continueRunningTests = false;
+        //         this.classList.remove('running');
+        //         this.part.remove('running');
+        //         if(playButtonLabel != null)
+        //         {
+        //             playButtonLabel.textContent = "Run Tests";
+        //         }
+        //         this.dispatchEvent(new CustomEvent(CodeTestEvent.AfterAll, { bubbles: true, composed: true }));
+        //         return;
+        //     }
+        // }
+    }
+    async runRequiredBeforeAnyHook()
+    {
+        // const requiredBeforeHook = this.#hooks[Hook.RequiredBeforeAny];
+        // if(requiredBeforeHook != null)
+        // {
+        //     let hookResult;
+        //     try
+        //     {
+        //         const requiredBeforeAnyHookElement = this.findElement(`#required-before-any-details`);
+        //         requiredBeforeAnyHookElement.classList.add('running');
+        //         requiredBeforeAnyHookElement.part.add('running');
+
+        //         //@ts-expect-error ts doesn't understand that this value can change while awaiting
+        //         if(this.isCanceled == true) { throw new Error("Test has been cancelled"); }
+        //         hookResult = await requiredBeforeHook(this, requiredBeforeAnyHookElement);
+
+        //         this.#handleHookResult(hookResult, true, 'before', true);
+        //         requiredBeforeAnyHookElement.part.remove('running');
+        //         requiredBeforeAnyHookElement.classList.remove('running');
+        //     }
+        //     catch(error)
+        //     {
+        //         this.#handleHookResult(hookResult, false, 'before', true, error as Error);
+        //         console.error(error);
+        //         this.#continueRunningTests = false;
+        //         this.classList.remove('running');
+        //         this.part.remove('running');
+        //         if(playButtonLabel != null)
+        //         {
+        //             playButtonLabel.textContent = "Run Tests";
+        //         }
+        //         this.dispatchEvent(new CustomEvent(CodeTestEvent.AfterAll, { bubbles: true, composed: true }));
+        //         return;
+        //     }
+        // }
+    }
+    async runRequiredAfterAnyHook()
+    {
+        // const requiredAfterHook = this.#hooks[Hook.RequiredAfterAny];
+        // if(requiredAfterHook != null)
+        // {
+        //     let hookResult;
+        //     try
+        //     {
+        //         const requiredAfterAnyHookElement = this.findElement(`#required-after-any-details`);
+        //         requiredAfterAnyHookElement.classList.add('running');
+        //         requiredAfterAnyHookElement.part.add('running');
+
+        //         //@ts-expect-error ts doesn't understand that this value can change while awaiting
+        //         if(this.isCanceled == true) { throw new Error("Test has been cancelled"); }
+        //         hookResult = await requiredAfterHook(this, requiredAfterAnyHookElement);
+
+        //         this.#handleHookResult(hookResult, true, 'after', true);
+        //         requiredAfterAnyHookElement.part.remove('running');
+        //         requiredAfterAnyHookElement.classList.remove('running');
+        //     }
+        //     catch(error)
+        //     {
+        //         this.#handleHookResult(hookResult, false, 'after', true, error as Error);
+        //         console.error(error);
+        //         this.#continueRunningTests = false;
+        //     }
+        // }
+    }
 }

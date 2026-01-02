@@ -12,7 +12,39 @@
         <slot name="header-details"></slot>
     </header>
 </slot>
+<details id="required-before-any-details" class="hook">
+    <summary id="required-before-any-summary">
+        <svg class="icon arrow-icon"><use href="#icon-definition_arrow"></use></svg>
+        <span id="required-before-any-result-icon" class="result-icon"></span>
+        <span id="required-before-any-description" class="description">Results from Required Before Any Hook</span>
+    </summary>
+    <div id="required-before-any-results" class="results"></div>
+</details>
+<details id="before-all-details" class="hook">
+    <summary id="before-all-summary">
+        <svg class="icon arrow-icon"><use href="#icon-definition_arrow"></use></svg>
+        <span id="before-all-result-icon" class="result-icon"></span>
+        <span id="before-all-description" class="description">Results from Before All Hook</span>
+    </summary>
+    <div id="before-all-results" class="results"></div>
+</details>
 <div id="tests"></div>
+<details id="after-all-details" class="hook">
+    <summary id="after-all-summary">
+        <svg class="icon arrow-icon"><use href="#icon-definition_arrow"></use></svg>
+        <span id="after-all-result-icon" class="result-icon"></span>
+        <span id="after-all-description" class="description">Results from After All Hook</span>
+    </summary>
+    <div id="after-all-results" class="results"></div>
+</details>
+<details id="required-after-any-details" class="hook">
+    <summary id="required-after-any-summary">
+        <svg class="icon arrow-icon"><use href="#icon-definition_arrow"></use></svg>
+        <span id="required-after-any-result-icon" class="result-icon"></span>
+        <span id="required-after-any-description" class="description">Results from Required After Any Hook</span>
+    </summary>
+    <div id="required-after-any-results" class="results"></div>
+</details>
 <div id="icon-definitions" style="display: none;">
     <svg id="icon-definition_arrow" viewBox="0 0 8 8" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
         <path d="m3.26,6.81l-2.93,-4.69c-0.37,-0.58 0.05,-1.34 0.74,-1.34l5.87,0c0.69,0 1.11,0.76 0.74,1.34l-2.93,4.69c-0.35,0.55 -1.14,0.55 -1.49,0z" fill="var(--fill-color, currentcolor)" />

@@ -1,3 +1,5 @@
+import type { CodeTestsElement } from '../../code-tests';
+import type { Test } from '../../types/test.type';
 import { default as style } from './code-test.css?raw';
 
 export type CodeTestState = {
@@ -10,6 +12,7 @@ export type CodeTestState = {
     resultType: 'none'|'success'|'fail';
     afterResult: string;
     afterResultType: 'none'|'success'|'fail';
+    test?: Test;
 }
 
 
@@ -23,6 +26,8 @@ export class CodeTestElement extends HTMLElement
     { 
         testId: '',
         description: 'none',
+        test: undefined,
+
         hasRun: false,
         beforeResult: '',
         beforeResultType: 'none',
@@ -113,6 +118,234 @@ export class CodeTestElement extends HTMLElement
         this.dataset.testId = this.state.testId;
         this.classList.add('test');
         this.part.add('test');
+
+        this.toggleAttribute('success', this.state.resultType == 'success');
+        this.classList.toggle('success', this.state.resultType == 'success');
+        this.part.toggle('success', this.state.resultType == 'success');
+        this.classList.toggle('fail', this.state.resultType == 'fail');
+        this.part.toggle('fail', this.state.resultType == 'fail');
+    }
+
+    async runTest()
+    {
+        if(this.state.test == null) { return; }
+        this.state.test(this.parentElement as CodeTestsElement, this);
+    }
+    async #runBeforeEachHook()
+    {
+
+    }
+    async #runAfterEachHook()
+    {
+
+    }
+    // async #runTest(testId: string, test: Test, handleRequiredTests: boolean = true)
+    // {
+    //     const testElement = this.findElement('#tests').querySelector<HTMLElement>(`[data-test-id="${testId}"]`);
+    //     if(testElement == null)
+    //     {
+    //         this.#addProcessError(`Unable to find test element for test: ${testId}`);
+    //         return;
+    //     }
+    //     testElement.toggleAttribute('success', false);
+    //     testElement.classList.add('running');
+    //     testElement.part.add('running');
+    //     testElement.classList.remove('success', 'fail');
+    //     testElement.part.remove('success', 'fail');
+
+    //     const iconElement = testElement.querySelector('.result-icon');
+    //     iconElement?.classList.remove('success', 'fail');
+    //     iconElement?.part.remove('success', 'fail');
+    //     iconElement?.classList.add('running');
+    //     iconElement?.part.add('running');
+        
+    //     // clean up old test result
+    //     const errorMessageElement = testElement.querySelector(".error-message");
+    //     if(errorMessageElement != null)
+    //     {
+    //         errorMessageElement.textContent = "";
+    //     }
+    //     const detailsElement = testElement.querySelector('details');
+    //     if(detailsElement != null)
+    //     {
+    //         detailsElement.open = false;
+    //     }
+        
+
+    //     // execute test
+    //     let beforeResult: TestResultType|typeof NOTESTDEFINED = NOTESTDEFINED;
+    //     let testResult;
+    //     let afterResult: TestResultType|typeof NOTESTDEFINED = NOTESTDEFINED;
+
+    //     let testType: 'before'|'after'|undefined;
+    //     try
+    //     {
+    //         const allowTest = this.dispatchEvent(new CustomEvent(CodeTestEvent.BeforeTest, { bubbles: true, cancelable: true, composed: true, detail: { testElement } }));
+
+    //         if(handleRequiredTests == true)
+    //         {
+    //             const requiredBeforeHook = this.#hooks[Hook.RequiredBeforeAny];
+    //             if(requiredBeforeHook != null)
+    //             {
+    //                 let hookResult;
+    //                 try
+    //                 {
+    //                     const requiredBeforeAnyHookElement = this.findElement(`#required-before-any-details`);
+    //                     requiredBeforeAnyHookElement.classList.add('running');
+    //                     requiredBeforeAnyHookElement.part.add('running');
+
+    //                     if(this.isCanceled == true) { throw new Error("Test has been cancelled"); }
+    //                     hookResult = await requiredBeforeHook(this, requiredBeforeAnyHookElement);
+
+    //                     this.#handleHookResult(hookResult, true, 'before', true);
+    //                     requiredBeforeAnyHookElement.part.remove('running');
+    //                     requiredBeforeAnyHookElement.classList.remove('running');
+    //                 }
+    //                 catch(error)
+    //                 {
+    //                     this.#handleHookResult(hookResult, true, 'before', true, error as Error);
+    //                     console.error(error);
+    //                     this.#continueRunningTests = false;
+    //                     return;
+    //                 }
+    //             }
+    //         }
+
+    //         if(this.#continueRunningTests == false) { throw new Error("Tests have been disabled from continuing to run."); }
+
+    //         if(allowTest == false || this.isCanceled == true) { throw new Error("Test has been cancelled"); }
+    //         const beforeHook = this.#hooks[Hook.BeforeEach];
+    //         if(beforeHook != null)
+    //         {
+    //             beforeResult = await beforeHook(this, testElement);
+    //         }
+
+    //         //@ts-expect-error - test can be cancelled while async functions run
+    //         if(this.isCanceled == true) { throw new Error("Test has been cancelled"); }
+    //         testResult = await test(this, testElement);
+
+    //         //@ts-expect-error - test can be cancelled while async functions run
+    //         if(this.isCanceled == true) { throw new Error("Test has been cancelled"); }
+    //         const afterHook = this.#hooks[Hook.AfterEach];
+    //         if(afterHook != null)
+    //         {
+    //             afterResult = await afterHook(this, testElement);
+    //         }
+            
+    //         if(handleRequiredTests == true)
+    //         {
+    //             const requiredAfterHook = this.#hooks[Hook.RequiredAfterAny];
+    //             if(requiredAfterHook != null)
+    //             {
+    //                 let hookResult;
+    //                 try
+    //                 {
+    //                     const requiredBeforeAnyHookElement = this.findElement(`#required-before-any-details`);
+    //                     requiredBeforeAnyHookElement.classList.add('running');
+    //                     requiredBeforeAnyHookElement.part.add('running');
+
+    //                     //@ts-expect-error ts doesn't understand that this value can change while awaiting
+    //                     if(this.isCanceled == true) { throw new Error("Test has been cancelled"); }
+    //                     hookResult = await requiredAfterHook(this, requiredBeforeAnyHookElement);
+
+    //                     this.#handleHookResult(hookResult, true, 'after', true);
+    //                     requiredBeforeAnyHookElement.part.remove('running');
+    //                     requiredBeforeAnyHookElement.classList.remove('running');
+    //                 }
+    //                 catch(error)
+    //                 {
+    //                     this.#handleHookResult(hookResult, true, 'after', true, error as Error);
+    //                     console.error(error);
+    //                     this.#continueRunningTests = false;
+    //                     return;
+    //                 }
+    //             }
+    //         }
+            
+    //         testType = 'before';
+    //         if(beforeResult != NOTESTDEFINED) // can't use undefined or null because those are valid result types
+    //         {
+    //             this.#handleTestResult(testElement, beforeResult, true, undefined, testType);
+    //         }
+
+    //         testType = undefined;
+    //         this.#handleTestResult(testElement, testResult, true, undefined, testType);
+
+    //         testType = 'after';
+    //         if(afterResult != NOTESTDEFINED) // can't use undefined or null because those are valid result types
+    //         {
+    //             this.#handleTestResult(testElement, afterResult, true, undefined, testType);
+    //         }
+    //     }
+    //     catch(error)
+    //     {
+    //         this.#handleTestResult(testElement, testResult, false, error as Error, testType);
+    //         console.error(error);
+    //         this.#continueRunningTests = false;
+    //     }
+    //     finally
+    //     {
+    //         testElement?.classList.remove('running');
+    //         testElement?.part.remove('running');
+            
+    //         iconElement?.classList.remove('running');
+    //         iconElement?.part.remove('running');
+
+    //         this.dispatchEvent(new CustomEvent(CodeTestEvent.AfterTest, { bubbles: true, cancelable: true, composed: true, detail: { testElement } }));
+    //     }
+    // }
+    // #handleTestResult(testElement: HTMLElement, result: TestResultType, finishedTest: boolean, error?: Error, beforeOrAfter?: 'before'|'after')
+    // {
+    //     console.log(result);
+    //     if(result instanceof HTMLElement)
+    //     {
+    //         this.#setTestResult(testElement, result, finishedTest, beforeOrAfter);
+    //     }
+    //     else if(result == undefined)
+    //     {
+    //         const trueMessage = (beforeOrAfter == undefined) ? 'Passed' : 'Hook Ran Successfully';
+    //         const defaultResult = this.#createDefaultResult(finishedTest == true ? `${trueMessage}` : `Failed${(error != null) ? `:\n${error.message}` : ''}`, finishedTest, beforeOrAfter);
+    //         this.#setTestResult(testElement, defaultResult, finishedTest, beforeOrAfter);
+    //     }
+    //     else if(typeof result == 'string')
+    //     {
+    //         const defaultResult = this.#createDefaultResult(`${result}${error == null ? '' : `:\n${error.message}`}`, finishedTest, beforeOrAfter);
+    //         this.#setTestResult(testElement, defaultResult, finishedTest, beforeOrAfter);
+    //     }
+    //     else if(typeof result == 'object')
+    //     {
+    //         const objectResult = result as any;
+    //         if(objectResult.success != undefined
+    //         && objectResult.expected != undefined
+    //         && objectResult.value != undefined)
+    //         {
+    //             const trueMessage = (beforeOrAfter == undefined) ? 'Passed' : 'Success';
+    //             const falseMessage = (beforeOrAfter == undefined) ? 'Failed' : 'Fail';
+    //             const defaultResult = this.#createDefaultResult(
+    //             `${(objectResult.success == true) ? `${trueMessage}:` : `${falseMessage}:`}\nExpected:${objectResult.expected}\nResult:${objectResult.value}`,
+    //             objectResult.success,
+    //             beforeOrAfter);
+    //             this.#setTestResult(testElement, defaultResult, objectResult.success, beforeOrAfter);
+    //         }
+    //     }
+
+    //     const detailsElement = testElement.querySelector('details');
+    //     if(detailsElement != null)
+    //     {
+    //         detailsElement.open = true;
+    //     }
+    // }
+
+    reset()
+    {
+        this.setStateProperties({
+            beforeResult: '',
+            beforeResultType: 'none',
+            result: '',
+            resultType: 'none',
+            afterResult: '',
+            afterResultType: 'none',
+        });
     }
     
     // static observedAttributes = [ "myprop" ];

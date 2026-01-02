@@ -3,6 +3,17 @@ import { CodeTestElement } from "../components/code-test/code-test";
 import type { Test } from "../types/test.type";
 import { TestManager } from "./test.manager";
 
+
+export const CodeTestEvent =
+{
+    BeforeAll: 'beforeall',
+    AfterAll: 'afterall',
+    BeforeTest: 'beforetest',
+    AfterTest: 'aftertest',
+    Cancel: 'cancel',
+}
+export type CodeTestEventType = typeof CodeTestEvent[keyof typeof CodeTestEvent];
+
 export class ContextManager
 {
     codeTestsElement: CodeTestsElement;
@@ -83,10 +94,74 @@ export class ContextManager
         testElement.setStateProperties({
             testId,
             description,
+            test
         })
         this.codeTestsElement.findElement('#tests').append(testElement);
         return testId;
     }
+
+    #continueRunningTests: boolean = true;
+    async runTests(tests: CodeTestElement[])
+    {
+        this.codeTestsElement.dispatchEvent(new CustomEvent(CodeTestEvent.BeforeAll, { bubbles: true, composed: true }));
+
+        this.codeTestsElement.setStateProperties({
+            isRunning: false,
+            isCanceled: false,
+            groupResultType: 'none',
+        })
+        this.#continueRunningTests = true;
+
+        this.codeTestsElement.reset();
+
+        const inOrder = this.codeTestsElement.hasAttribute('in-order');
+
+        await this.#testManager.runRequiredBeforeAnyHook();
+        await this.#testManager.runBeforeAllHook();
+
+        if(inOrder == false)
+        {
+            const promises = tests.map(item => item.runTest());
+            await Promise.all(promises);
+        }
+        else
+        {
+            for(let i = 0; i < tests.length; i++)
+            {
+                const test = tests[i];
+                //@ts-expect-error ts doesn't understand that runTest can change this value?
+                if(this.#continueRunningTests == false) { break; }
+                await test.runTest();
+            }
+        }
+        //@ts-expect-error ts doesn't understand that runTest can change this value?
+        if(this.#continueRunningTests == false)
+        { 
+            await this.#testManager.runRequiredAfterAnyHook();
+            this.codeTestsElement.setStateProperties({
+                isRunning: false,
+            });
+            this.codeTestsElement.dispatchEvent(new CustomEvent(CodeTestEvent.AfterAll, { bubbles: true, composed: true }));
+            return;
+        }
+        
+        await this.#testManager.runAfterAllHook();
+        await this.#testManager.runRequiredAfterAnyHook();
+
+
+        const failedTests = this.codeTestsElement.findElements('[success="false"]');
+        this.codeTestsElement.setStateProperties({
+            groupResultType: failedTests.length == 0 ? 'success' : 'fail',
+            isRunning: false,
+        });
+        this.codeTestsElement.dispatchEvent(new CustomEvent(CodeTestEvent.AfterAll, { bubbles: true, composed: true }));
+    }
+    runTest(test?: CodeTestElement)
+    {
+        if(test == null) { return; }
+        test.runTest();
+    }
+
 
     reset()
     {
