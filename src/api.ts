@@ -92,7 +92,7 @@ export class TestPromise<T> extends Promise<T>
         
         if(target.getAttribute(value))
         {
-            throw new Error("Taret does not have attribute");
+            throw new Error("Target does not have attribute");
         }
     }
 }

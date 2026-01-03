@@ -1,7 +1,10 @@
 
 import { Hook } from "../code-tests";
+import { NOTESTDEFINED } from "../constants";
+import type { TestResultType } from "../types/test-result.type";
 import type { Test } from "../types/test.type";
 import type { Tests } from "../types/tests.type";
+import type { ContextManager } from "./context.manager";
 
 export type Hooks = {
     [Hook.BeforeAll]?: Test,
@@ -14,7 +17,7 @@ export type Hooks = {
 
 export class TestManager
 {
-    #hooks: Hooks = { };
+    // #hooks: Hooks = { };
     
     #tests: Map<string, Test> = new Map();
 
@@ -68,7 +71,8 @@ export class TestManager
         }
 
         this.#tests = new Map(Object.entries(tests));
-        this.#hooks = hooks;
+
+        // this.#hooks = hooks;
 
         return { tests, hooks };
     }
@@ -236,6 +240,8 @@ export class TestManager
     async runRequiredAfterAnyHook()
     {
         // const requiredAfterHook = this.#hooks[Hook.RequiredAfterAny];
+        // if(requiredAfterHook == null) { return NOTESTDEFINED; }
+        
         // if(requiredAfterHook != null)
         // {
         //     let hookResult;
@@ -260,5 +266,31 @@ export class TestManager
         //         this.#continueRunningTests = false;
         //     }
         // }
+    }
+
+    async runHook(contextManager: ContextManager, hook: () => TestResultType)
+    {
+        if(contextManager.codeTestsElement.state.isCanceled == true) { throw new Error("Tests have been cancelled"); }
+        return await hook(contextManager.codeTestsElement);
+        //     try
+        //     {
+        //         const requiredAfterAnyHookElement = this.findElement(`#required-after-any-details`);
+        //         requiredAfterAnyHookElement.classList.add('running');
+        //         requiredAfterAnyHookElement.part.add('running');
+
+        //         //@ts-expect-error ts doesn't understand that this value can change while awaiting
+        //         if(this.isCanceled == true) { throw new Error("Test has been cancelled"); }
+        //         hookResult = await requiredAfterHook(this, requiredAfterAnyHookElement);
+
+        //         this.#handleHookResult(hookResult, true, 'after', true);
+        //         requiredAfterAnyHookElement.part.remove('running');
+        //         requiredAfterAnyHookElement.classList.remove('running');
+        //     }
+        //     catch(error)
+        //     {
+        //         this.#handleHookResult(hookResult, false, 'after', true, error as Error);
+        //         console.error(error);
+        //         this.#continueRunningTests = false;
+        //     }
     }
 }

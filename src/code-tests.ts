@@ -3,11 +3,8 @@ import { default as html } from './code-tests.html?raw';
 import { CodeTests, expect, prompt  } from './api';
 import { assignClassAndIdToPart } from 'ce-part-utils';
 
-import './components/run-button/run-button';
-import { RunButton } from './components/run-button/run-button';
-import { TestManager } from './managers/test.manager';
 import { ContextManager } from './managers/context.manager';
-import { CodeTestElement } from './components/code-test/code-test';
+import { CodeTestElement, type TestState } from './components/code-test/code-test';
 
 export type CodeTestsState = 
 {
@@ -16,10 +13,11 @@ export type CodeTestsState =
     groupResultType: 'none'|'success'|'fail';
 
     hasRun: boolean,
-    beforeResult: string,
-    beforeResultType: 'none'|'success'|'fail',
-    afterResult: string,
-    afterResultType: 'none'|'success'|'fail',
+    
+    beforeAllState?: TestState,
+    afterAllState?: TestState,
+    requiredBeforeAnyState?: TestState,
+    requiredAfterAnyState?: TestState
 }
 
 export const Hook = 
@@ -34,7 +32,6 @@ export const Hook =
 export type HookType = typeof Hook[keyof typeof Hook];
 
 
-const NOTESTDEFINED = Symbol('No Test Defined');
 
 const COMPONENT_STYLESHEET = new CSSStyleSheet();
 COMPONENT_STYLESHEET.replaceSync(style);
@@ -49,10 +46,10 @@ export class CodeTestsElement extends HTMLElement
         groupResultType: 'none',
 
         hasRun: false,
-        beforeResult: '',
-        beforeResultType: 'none',
-        afterResult: '',
-        afterResultType: 'none',
+        beforeAllState: undefined,
+        afterAllState: undefined,
+        requiredBeforeAnyState: undefined,
+        requiredAfterAnyState: undefined,
     };
         
     setState(state: CodeTestsState)
@@ -70,17 +67,6 @@ export class CodeTestsElement extends HTMLElement
 
     findElement<T extends HTMLElement = HTMLElement>(query: string) { return this.shadowRoot!.querySelector(query) as T; }
     findElements<T extends HTMLElement = HTMLElement>(query: string) { return Array.from(this.shadowRoot!.querySelectorAll(query) as Iterable<T>) as Array<T>; }
-
-    // #hooks: {
-    //     [Hook.BeforeAll]?: Test,
-    //     [Hook.AfterAll]?: Test,
-    //     [Hook.BeforeEach]?: Test,
-    //     [Hook.AfterEach]?: Test,
-    //     [Hook.RequiredBeforeAny]?: Test,
-    //     [Hook.RequiredAfterAny]?: Test,
-    // } = { };
-
-    #continueRunningTests: boolean = true;
 
     #contextManager: ContextManager;
 
@@ -110,8 +96,6 @@ export class CodeTestsElement extends HTMLElement
     {
         if(this.#isInitialized == true) { return; }
 
-        await this.#initManagers();
-        await this.#initComponents();
         await this.#initHandlers();
 
         this.#isInitialized = true;
@@ -119,14 +103,6 @@ export class CodeTestsElement extends HTMLElement
         if(this.getAttribute('auto') == 'false') { return; }
         const testsPath = this.#getCurrentTestsPath();
         this.#contextManager.loadTests(testsPath);
-    }
-    async #initManagers()
-    {
-        
-    }
-    async #initComponents()
-    {
-        // const runAllButton = this.findElement<RunButton>('#run-all-button');
     }
     async #initHandlers()
     {
@@ -146,10 +122,11 @@ export class CodeTestsElement extends HTMLElement
             this.runTests();
             return;
         }
+
         const runButton = event.composedPath().find(item => item instanceof HTMLButtonElement && item.classList.contains('run-test-button')) as HTMLButtonElement;
+        if(runButton == null) { return; }
 
         const test = runButton.closest<CodeTestElement>('code-test') ?? undefined;
-
         this.#contextManager.runTest(test);
 
         // if(parentListItem == null)
@@ -211,18 +188,18 @@ export class CodeTestsElement extends HTMLElement
         }
 
         const beforeAllHookElement = this.findElement(`#before-all-details`);
-        beforeAllHookElement.toggleAttribute('success', this.state.beforeResultType == 'success');
-        beforeAllHookElement.classList.toggle('success', this.state.beforeResultType == 'success');
-        beforeAllHookElement.part.toggle('success', this.state.beforeResultType == 'success');
-        beforeAllHookElement.classList.toggle('fail', this.state.beforeResultType == 'fail');
-        beforeAllHookElement.part.toggle('fail', this.state.beforeResultType == 'fail');
+        beforeAllHookElement.toggleAttribute('success', this.state.beforeAllState?.resultCategory == 'success');
+        beforeAllHookElement.classList.toggle('success', this.state.beforeAllState?.resultCategory == 'success');
+        beforeAllHookElement.part.toggle('success', this.state.beforeAllState?.resultCategory == 'success');
+        beforeAllHookElement.classList.toggle('fail', this.state.beforeAllState?.resultCategory == 'fail');
+        beforeAllHookElement.part.toggle('fail', this.state.beforeAllState?.resultCategory == 'fail');
         
         const afterAllHookElement = this.findElement(`#after-all-details`);
-        afterAllHookElement.toggleAttribute('success', this.state.afterResultType == 'success');
-        afterAllHookElement.classList.toggle('success', this.state.afterResultType == 'success');
-        afterAllHookElement.part.toggle('success', this.state.afterResultType == 'success');
-        afterAllHookElement.classList.toggle('fail', this.state.afterResultType == 'fail');
-        afterAllHookElement.part.toggle('fail', this.state.afterResultType == 'fail');
+        afterAllHookElement.toggleAttribute('success', this.state.afterAllState?.resultCategory == 'success');
+        afterAllHookElement.classList.toggle('success', this.state.afterAllState?.resultCategory == 'success');
+        afterAllHookElement.part.toggle('success', this.state.afterAllState?.resultCategory == 'success');
+        afterAllHookElement.classList.toggle('fail', this.state.afterAllState?.resultCategory == 'fail');
+        afterAllHookElement.part.toggle('fail', this.state.afterAllState?.resultCategory == 'fail');
     }
 
     async runTests()
@@ -240,12 +217,26 @@ export class CodeTestsElement extends HTMLElement
             test.reset();
         }
 
+        const beforeAllState: TestState|undefined = (this.state.beforeAllState == undefined)
+        ? undefined
+        : { resultContent: '', resultCategory: 'none', test: this.state.beforeAllState.test };
+        const afterAllState: TestState|undefined = (this.state.afterAllState == undefined)
+        ? undefined
+        : { resultContent: '', resultCategory: 'none', test: this.state.afterAllState.test };
+        const requiredBeforeAnyState: TestState|undefined = (this.state.requiredBeforeAnyState == undefined)
+        ? undefined
+        : { resultContent: '', resultCategory: 'none', test: this.state.requiredBeforeAnyState.test };
+        const requiredAfterAnyState: TestState|undefined = (this.state.requiredAfterAnyState == undefined)
+        ? undefined
+        : { resultContent: '', resultCategory: 'none', test: this.state.requiredAfterAnyState.test };
+
         this.setStateProperties({
             groupResultType: 'none',
-            beforeResult: '',
-            beforeResultType: 'none',
-            afterResult: '',
-            afterResultType: 'none',
+            
+            beforeAllState,
+            afterAllState,
+            requiredAfterAnyState,
+            requiredBeforeAnyState,
         });
     }
 
@@ -262,164 +253,6 @@ export class CodeTestsElement extends HTMLElement
     // }
 
     
-    // #clearTestStatuses()
-    // {
-    //     for(const [testId, _test] of this.#tests)
-    //     {
-    //         const testElement = this.findElement('#tests').querySelector<HTMLElement>(`[data-test-id="${testId}"]`);
-    //         if(testElement == null)
-    //         {
-    //             this.#addProcessError(`Unable to find test element for test: ${testId}`);
-    //             return;
-    //         }
-            
-    //         testElement.toggleAttribute('success', false);
-    //         testElement.classList.remove('success', 'fail');
-    //         testElement.part.remove('success', 'fail');
-    //     } 
-
-    //     const beforeAllHookElement = this.findElement(`#before-all-details`);
-    //     beforeAllHookElement.toggleAttribute('success', false);
-    //     beforeAllHookElement.classList.remove('success', 'fail');
-    //     beforeAllHookElement.part.remove('success', 'fail');
-        
-    //     const afterAllHookElement = this.findElement(`#after-all-details`);
-    //     afterAllHookElement.toggleAttribute('success', false);
-    //     afterAllHookElement.classList.remove('success', 'fail');
-    //     afterAllHookElement.part.remove('success', 'fail');
-    // }
-    
-    // #handleHookResult(result: TestResultType, finishedTest: boolean, beforeOrAfter: 'before'|'after', required: boolean, error?: Error)
-    // {
-    //     if(result instanceof HTMLElement)
-    //     {
-    //         this.#setHookResult(result, finishedTest, beforeOrAfter, required);
-    //     }
-    //     else 
-    //     {
-    //         let defaultResult: HTMLElement;
-    //         if(result == undefined)
-    //         {
-    //             defaultResult = this.#createDefaultResult(finishedTest == true ? 'Hook Ran Successfully' : `Failed${(error != null) ? `:\n${error.message}` : ''}`, finishedTest);
-    //             this.#setHookResult(defaultResult, finishedTest, beforeOrAfter, required);
-    //         }
-    //         else if(typeof result == 'string')
-    //         {
-    //             defaultResult = this.#createDefaultResult(`${result}${error == null ? '' : `:\n${error.message}`}`, finishedTest);
-    //             this.#setHookResult(defaultResult, finishedTest, beforeOrAfter, required);
-    //         }
-    //         else if(typeof result == 'object')
-    //         {
-    //             const objectResult = result as any;
-    //             if(objectResult.success != undefined
-    //             && objectResult.expected != undefined
-    //             && objectResult.value != undefined)
-    //             {
-    //                 defaultResult = this.#createDefaultResult(
-    //                     `${(objectResult.success == true) ?'Success:' : 'Fail:'}\nExpected:${objectResult.expected}\nResult:${objectResult.value}`,
-    //                     objectResult.success
-    //                 );
-    //                 this.#setHookResult(defaultResult, finishedTest, beforeOrAfter, required);
-    //             }
-    //         }
-    //     }
-
-    //     const detailsElement = this.findElement<HTMLDetailsElement>(`#${beforeOrAfter}-all-details`);
-    //     if(detailsElement != null)
-    //     {
-    //         detailsElement.open = true;
-    //     }
-    // }
-
-    // static create(_properties: CodeTestsProperties)
-    // {
-    //     const element = document.createElement('code-tests');
-    //     // console.log(properties);
-    //     return element;
-    // }
-
-    // #setTestResult(testElement: HTMLElement, valueElement: HTMLElement, success: boolean, beforeOrAfter?: 'before'|'after')
-    // {
-    //     testElement.setAttribute('success', success == true ? 'true' : 'false');
-    //     testElement.classList.toggle('success', success);
-    //     testElement.part.toggle('success', success);
-    //     testElement.classList.toggle('fail', !success);
-    //     testElement.part.toggle('fail', !success);
-        
-    //     const iconElement = testElement.querySelector('.result-icon');
-    //     iconElement?.classList.toggle('success', success);
-    //     iconElement?.part.toggle('success', success);
-    //     iconElement?.classList.toggle('fail', !success);
-    //     iconElement?.part.toggle('fail', !success);
-
-    //     const resultElement = testElement.querySelector(`.${beforeOrAfter == undefined
-    //     ? 'result'
-    //     : beforeOrAfter == 'before'
-    //     ? 'before-result'
-    //     : 'after-result'}`);
-    //     if(resultElement == null)
-    //     {
-    //         this.#addProcessError(`Unable to find result element`);
-    //         return;
-    //     }
-
-    //     resultElement.innerHTML = '';
-    //     resultElement.appendChild(valueElement);
-    // }
-    // #createDefaultResult(message: string, success: boolean, _beforeOrAfter?: 'before'|'after')
-    // {    
-    //     const codeElement = document.createElement('code');
-    //     codeElement.classList.add('code');
-    //     codeElement.part.add('code');
-    //     const preElement = document.createElement('pre');
-    //     preElement.textContent = message;
-    //     const className = (success == true)
-    //     ? 'success-message'
-    //     : 'error-message';
-    //     preElement.classList.add('pre', className);
-    //     preElement.part.add('pre', className);
-    //     codeElement.appendChild(preElement);
-    //     return codeElement;
-    // }
-    // #setHookResult(valueElement: HTMLElement, success: boolean, beforeOrAfter: 'before'|'after', required: boolean)
-    // {
-    //     const selector = (required == true)
-    //     ? `required-${beforeOrAfter}-any`
-    //     : `${beforeOrAfter}-all`;
-    //     const detailsElement = this.findElement(`#${selector}-details`);
-    //     const resultsElement = this.findElement(`#${selector}-results`);
-    //     detailsElement.setAttribute('success', success == true ? 'true' : 'false');
-    //     detailsElement.classList.toggle('success', success);
-    //     detailsElement.part.toggle('success', success);
-    //     detailsElement.classList.toggle('fail', !success);
-    //     detailsElement.part.toggle('fail', !success);
-
-    //     resultsElement.innerHTML = '';
-    //     resultsElement.appendChild(valueElement);
-    // }
-    // #addProcessError(message: string, error?: unknown)
-    // {
-    //     if(error instanceof Error)
-    //     {
-    //         message += `\n${error.message}`;
-
-    //         console.error(error);
-    //     }
-        
-    //     const errorElement = document.createElement('li');
-    //     errorElement.classList.add('error', 'process-error');
-    //     errorElement.part.add('error', 'process-error');
-    //     const codeElement = document.createElement('code');
-    //     codeElement.classList.add('code', 'process-error-code');
-    //     codeElement.part.add('code', 'process-error-code');
-    //     const preElement = document.createElement('pre');
-    //     preElement.classList.add('pre', 'process-error-pre');
-    //     preElement.part.add('pre', 'process-error-pre');
-    //     preElement.textContent = message;
-    //     codeElement.append(preElement);
-    //     errorElement.append(codeElement);
-    //     this.findElement('#tests').append(errorElement);
-    // }
 
     // #updateListType(type: 'ordered'|'unordered')
     // {
@@ -457,18 +290,18 @@ export class CodeTestsElement extends HTMLElement
     //     }
     // }
 
-    static observedAttributes = ['in-order'];
+    static observedAttributes = ['unordered'];
     attributeChangedCallback(attributeName: string, _oldValue: string, newValue: string)
     {
-        if(attributeName == 'in-order')
+        if(attributeName == 'unordered')
         {
             // if(newValue == undefined)
             // {
-            //     this.#updateListType('unordered');
+            //     this.#updateListType('ordered');
             // }
             // else
             // {
-            //     this.#updateListType('ordered');
+            //     this.#updateListType('unordered');
             // }
         }
     }

@@ -1,2 +1,2 @@
-export type TestResult = { success: boolean, expected: any, value: any; };
-export type TestResultType = void|undefined|string|TestResult|HTMLElement;
+export type TestResult = { success: boolean, expected: any, value: string|HTMLElement|Promise<string|HTMLElement>, data: any };
+export type TestResultType<T extends any = any> = void|undefined|string|TestResult|HTMLElement|Promise<T>;
