@@ -8,11 +8,12 @@ import { CodeTestElement, type TestState } from './components/code-test/code-tes
 
 export type CodeTestsState = 
 {
-    isRunning: boolean;
+    // isOpen: boolean;
+    // isRunning: boolean;
     isCanceled: boolean;
-    groupResultType: 'none'|'success'|'fail';
+    // groupResultType: 'none'|'success'|'fail';
 
-    hasRun: boolean,
+    // hasRun: boolean,
     
     beforeAllState?: TestState,
     afterAllState?: TestState,
@@ -43,11 +44,12 @@ export class CodeTestsElement extends HTMLElement
 {
     state: CodeTestsState = 
     { 
-        isRunning: false,
+        // isOpen: false,
+        // isRunning: false,
         isCanceled: false,
-        groupResultType: 'none',
+        // groupResultType: 'none',
 
-        hasRun: false,
+        // hasRun: false,
         beforeAllState: undefined,
         afterAllState: undefined,
         beforeEachState: undefined,
@@ -86,20 +88,57 @@ export class CodeTestsElement extends HTMLElement
     findElements<T extends HTMLElement = HTMLElement>(query: string) { return Array.from(this.shadowRoot!.querySelectorAll(query) as Iterable<T>) as Array<T>; }
 
     
-    isRunning()
+    getIsRunning()
     {
-        return false;
-        // return this.state.testState?.isRunning == true
-        // || this.state.beforeEachState?.isRunning == true
-        // || this.state.afterEachState?.isRunning == true;
+        const testsAreRunning = this.findElements<CodeTestElement>('code-test').find(item => item.isRunning() == true) != null;
+
+        console.log(testsAreRunning)
+
+        return testsAreRunning == true
+        || this.state.requiredBeforeAnyState?.isRunning == true
+        || this.state.requiredAfterAnyState?.isRunning == true
+        || this.state.beforeAllState?.isRunning == true
+        || this.state.afterAllState?.isRunning == true;
     }
     
-    groupResultType()
+    getResultCategory()
     {
+        const testCategory = this.findElements<CodeTestElement>('code-test').reduce((result, item, _index) => {
+            const category = item.resultCategory();
+            if(result == 'fail' || category == 'fail') { return 'fail'; }
+            if((result == 'success' || result == '') && category == 'success') { return 'success'; }
+            if(category == 'none') { return 'none'; }
+            return 'none';
+        }, '');
+
+        const states = [
+            this.state.requiredBeforeAnyState,
+            this.state.requiredAfterAnyState,
+            this.state.beforeAllState,
+            this.state.afterAllState,
+        ];
+        const statesCategory = states.reduce<string|null>((result, item, _index) => {
+            if(item == null) { return null; }
+            const category = item?.resultCategory;
+            if(result == 'fail' || category == 'fail') { return 'fail'; }
+            if((result == 'success' || result == '') && category == 'success') { return 'success'; }
+            if(category == 'none') { return 'none'; }
+            return 'none';
+        }, '');
+
+        if(testCategory == 'none' && statesCategory == null)
+        {
+            return 'none';
+        }
+        else if(testCategory == 'fail' || statesCategory == 'fail')
+        {
+            return 'fail';
+        }
+        else if(testCategory == 'success' && statesCategory == 'success')
+        {
+            return 'success';
+        }
         return 'none';
-        // return this.state.testState?.isRunning == true
-        // || this.state.beforeEachState?.isRunning == true
-        // || this.state.afterEachState?.isRunning == true;
     }
 
     #contextManager: ContextManager;
@@ -110,9 +149,6 @@ export class CodeTestsElement extends HTMLElement
         this.attachShadow({ mode: "open" });
         this.shadowRoot!.innerHTML = html;
         this.shadowRoot!.adoptedStyleSheets.push(COMPONENT_STYLESHEET);
-
-        this.#boundClickHandler = this.#onClick.bind(this);
-
         this.#contextManager = new ContextManager(this);
     }
     
@@ -141,13 +177,15 @@ export class CodeTestsElement extends HTMLElement
     async #initHandlers()
     {
         this.addEventListener('click', this.#boundClickHandler);
+        
+        // this.findElement('#component-details').addEventListener('close', this.#boundDetailsToggleHandler);
     }
     #destroy()
     {
         this.removeEventListener('click', this.#boundClickHandler);
     }
 
-    #boundClickHandler!: (event: Event) => void;
+    #boundClickHandler: (event: Event) => void= this.#onClick.bind(this);
     #onClick(event: Event)
     {
         const runAllButton = event.composedPath().find(item => item instanceof HTMLButtonElement && item.id == 'run-all-button') as HTMLButtonElement;
@@ -192,6 +230,14 @@ export class CodeTestsElement extends HTMLElement
         // this.part.remove('canceled');
         // this.#runTest(testId, test);
     }
+    // #boundDetailsToggleHandler: (event: Event) => void = this.#componentDetails_onToggle.bind(this);
+    // #componentDetails_onToggle(event: Event)
+    // {
+    //     event.preventDefault();
+    //     event.stopPropagation();
+    //     return false;
+    //     // this.setStateProperties({ isOpen: false })
+    // }
 
     #getCurrentTestsPath()
     {
@@ -205,18 +251,28 @@ export class CodeTestsElement extends HTMLElement
 
     #render()
     {
-        this.classList.toggle('running', this.state.isRunning);
-        this.part.toggle('running', this.state.isRunning);
+        const isRunning = this.getIsRunning();
+        const resultCategory = this.getResultCategory();
 
         this.classList.toggle('canceled', this.state.isCanceled);
         this.part.toggle('canceled', this.state.isCanceled);
-        
-        this.toggleAttribute('success', this.state.groupResultType == 'success');
 
-        const runAllButtonLabel = this.findElement('run-all-button-label');
+        // const componentDetails = this.findElement('#component-details');
+        // componentDetails.toggleAttribute('open', this.state.isOpen);
+        this.classList.toggle('running', isRunning == true);
+        this.part.toggle('running', isRunning == true);
+        this.toggleAttribute('success', resultCategory == 'success');
+        this.classList.toggle('success', resultCategory == 'success');
+        this.part.toggle('success', resultCategory == 'success');
+        this.classList.toggle('fail', resultCategory == 'fail');
+        this.part.toggle('fail', resultCategory == 'fail');
+        
+        // this.toggleAttribute('success', this.state.groupResultType == 'success');
+
+        const runAllButtonLabel = this.findElement('.run-all-button-label');
         if(runAllButtonLabel != null)
         {
-            runAllButtonLabel.textContent = this.state.isRunning == true
+            runAllButtonLabel.textContent = isRunning == true
             ? "Cancel"
             : "Run Tests";
         }
@@ -226,7 +282,7 @@ export class CodeTestsElement extends HTMLElement
         this.#renderHook(this.state.requiredBeforeAnyState, '#required-before-any-results');
         this.#renderHook(this.state.requiredAfterAnyState, '#required-after-any-results');
 
-        //todo: convert to toggles
+        //todo: convert to toggles; start from contextManager.loadTests
         // this.classList.remove('has-before-hook', 'has-before-all-hook', 'has-before-each-hook', 'has-required-before-hook');
         // this.part.remove('has-before-hook', 'has-before-all-hook', 'has-before-each-hook', 'has-required-before-hook');
         // this.classList.remove('has-after-hook', 'has-after-all-hook', 'has-after-each-hook', 'has-required-after-hook');
@@ -291,8 +347,6 @@ export class CodeTestsElement extends HTMLElement
         : { resultContent: '', resultCategory: 'none', test: this.state.requiredAfterAnyState.test, isRunning: false, hasRun: false };
 
         this.setStateProperties({
-            groupResultType: 'none',
-
             isCanceled: false,
             
             beforeAllState,
@@ -316,57 +370,12 @@ export class CodeTestsElement extends HTMLElement
     //     this.dispatchEvent(new CustomEvent(CodeTestEvent.Cancel, { bubbles: true, composed: true }));
     // }
 
-    
-
-    // #updateListType(type: 'ordered'|'unordered')
-    // {
-    //     if(type == 'ordered')
-    //     {
-    //         const list = this.shadowRoot!.querySelector<HTMLElement>('ul');
-    //         if(list == null) { return; }
-
-    //         const items = this.shadowRoot?.querySelectorAll<HTMLElement>('li');
-
-    //         const newList = document.createElement('ol');
-    //         if(items != null)
-    //         {
-    //             newList.append(...items);
-    //         }
-    //         newList.id = 'tests';
-
-    //         list.replaceWith(newList);
-    //     }
-    //     else
-    //     {
-    //         const list = this.shadowRoot!.querySelector<HTMLElement>('ol');
-    //         if(list == null) { return; }
-
-    //         const items = this.shadowRoot?.querySelectorAll<HTMLElement>('li');
-
-    //         const newList = document.createElement('ul');
-    //         newList.id = 'tests';
-    //         if(items != null)
-    //         {
-    //             newList.append(...items);
-    //         }
-
-    //         list.replaceWith(newList);
-    //     }
-    // }
-
-    static observedAttributes = ['unordered'];
+    static observedAttributes = ['open'];
     attributeChangedCallback(attributeName: string, _oldValue: string, newValue: string)
     {
-        if(attributeName == 'unordered')
+        if(attributeName == 'open')
         {
-            // if(newValue == undefined)
-            // {
-            //     this.#updateListType('ordered');
-            // }
-            // else
-            // {
-            //     this.#updateListType('unordered');
-            // }
+            this.findElement('#component-details').toggleAttribute('open', (newValue != undefined));
         }
     }
 }

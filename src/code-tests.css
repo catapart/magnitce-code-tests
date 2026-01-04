@@ -4,20 +4,28 @@
     --gap-small: 3px;
     --gap-medium: 14px;
     --gap-large: 24px;
+    
+    --surface-success: oklch(93.96% 0.05 148.74);
+    --primary-success: oklch(58.83% 0.158 145.05);
+    --border-success: solid 1px var(--primary-success);
+
+    --surface-fail: oklch(88.98% 0.052 3.28);
+    --primary-fail: oklch(45.8% 0.177 17.7);
+    --border-fail: solid 1px var(--primary-fail);
+
+    --surface-process: oklch(89.66% 0.046 260.67);
+    --primary-process: oklch(43.48% 0.17 260.2);
+    --border-process: solid 1px var(--primary-process);
+
+
 
     --surface-test-summary: var(--uchu-gray);
     --surface-hook-summary: var(--uchu-light-purple);
     --surface-hook-any-summary: var(--uchu-light-blue);
-    --surface-success: oklch(93.96% 0.05 148.74);
-    --surface-fail: oklch(88.98% 0.052 3.28);
-    --surface-process: var(--uchu-light-blue);
     
     --border-test: solid 1px var(--uchu-dark-gray);
     --border-hook: solid 1px var(--uchu-dark-purple);
     --border-hook-any: solid 1px var(--uchu-dark-blue);
-    --border-success: solid 1px oklch(58.83% 0.158 145.05);
-    --border-fail: solid 1px oklch(45.8% 0.177 17.7);
-    --border-process: solid 1px var(--uchu-dark-blue);
     --border-button: solid 1px var(--uchu-blue);
     
     --success-icon: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%232e943a" d="M20.285 2l-11.285 11.567-5.286-5.011-3.714 3.716 9 8.728 15-15.285z"/></svg>');
@@ -31,6 +39,7 @@
 
 #header
 {
+    flex: 1;
     display: flex;
     align-items: center;
     gap: var(--gap);
@@ -65,6 +74,15 @@ summary > .run-test-button
     margin-left: auto;
 }
 
+summary:not(#component-summary)
+{
+    padding: var(--gap-small) var(--gap);
+}
+#component-summary
+{
+    padding-block: var(--gap-small);
+}
+
 
 /* Dropdown Markers */
 summary
@@ -72,7 +90,6 @@ summary
     display: flex;
     align-items: center;
     gap: var(--gap);
-    padding: var(--gap-small) var(--gap);
 }
 summary > .arrow-icon
 {
@@ -107,14 +124,16 @@ details[open] > summary > .arrow-icon
     font-size: 10px;
 }
 
-.test.running .test-summary > .result-icon
+:host(.running) #component-summary .result-icon
+,.test.running .test-summary > .result-icon
 ,.hook.running .result-icon
 ,.processing-details.running .processing-result-icon
 {
     border: var(--border-process);
     background: var(--surface-process);
 }
-.test.success .test-summary > .result-icon
+:host(.success) #component-summary .result-icon
+,.test.success .test-summary > .result-icon
 ,.hook.success .result-icon
 ,.processing-details.success .processing-result-icon
 {
@@ -125,7 +144,8 @@ details[open] > summary > .arrow-icon
     background-position: center;
     background-size: var(--icon-size, 12px) var(--icon-size, 12px);
 }
-.test.fail .test-summary > .result-icon
+:host(.fail) #component-summary .result-icon
+,.test.fail .test-summary > .result-icon
 ,.hook.fail .result-icon
 ,.processing-details.fail .processing-result-icon
 {
@@ -137,18 +157,20 @@ details[open] > summary > .arrow-icon
     background-position: center;
     transform: rotate(175deg);
 }
-.test:is(.success,.fail) .test-summary > .result-icon::before
+:host(:is(.success,.fail)) #component-summary .result-icon::before
+,.test:is(.success,.fail) .test-summary > .result-icon::before
 ,.hook:is(.success,.fail) .result-icon::before
 ,.processing-details:is(.success,.fail) .processing-result-icon::before
 {
     display: none;
 }
-.test:is(.running) .test-summary > .result-icon::before
+:host(.running) #component-summary .result-icon::before
+,.test:is(.running) .test-summary > .result-icon::before
 ,.hook:is(.running) .result-icon::before
 ,.processing-details:is(.running) .processing-result-icon::before
 {
     content: '';
-    --color: var(--text-process, currentColor);
+    --color: var(--primary-process, currentColor);
     --animation-timing-function: linear;
     --animation-duration: 2s;
     width: var(--icon-size, 14px);
@@ -185,7 +207,8 @@ details[open] > summary > .arrow-icon
 {
     --icon-size: 12px;
 }
-.hook:is(.running) .result-icon::before
+.hook:is(.running) .before-each-result-icon::before
+,.hook:is(.running) .after-each-result-icon::before
 ,.processing-details:is(.running) .processing-result-icon::before
 {
     --icon-size: 9px;
@@ -212,6 +235,45 @@ details[open] > summary > .arrow-icon
     display: initial;
 }
 
+/* Test Display */
+code-test .results
+{
+    display: grid;
+    gap: var(--gap-small);
+    padding-inline-start: 1em;
+}
+
+code-test .results details .result
+,.hook > .results
+{
+    margin-inline-start: 1em;
+}
+
+/* Ordered Display */
+#tests
+{
+    counter-reset: tests;
+}
+code-test
+{
+    counter-increment: tests;
+}
+:host(:not([ordered="false"])) code-test > details > summary > .description::before
+{
+    content: counter(tests) ". ";
+}
+
+/* Hook Name */
+.hook-name,.processing-description
+{
+    border-radius: 3px;
+    border: solid 1px;
+    /* background: rgb(0 0 0 / .2); */
+    font-family: monospace;
+    text-transform: uppercase;
+    font-size: 11px;
+    padding: 3px 7px;
+}
 
 @keyframes spin
 {

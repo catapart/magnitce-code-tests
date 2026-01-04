@@ -1,49 +1,57 @@
-<slot name="header">
-    <header id="header">
-        <span id="title"><slot name="title"><span id="title-text">Tests</span></slot></span>
-        <slot name="run-all-button">
-            <button type="button" id="run-all-button" title="Run All Tests">
-                <slot name="run-all-button-content">
-                    <slot name="run-all-button-icon"><svg class="icon arrow-icon run-button-icon run-all-button-icon"><use href="#icon-definition_arrow"></use></svg></slot>
-                    <slot name="run-all-button-label"><span class="run-all-button-label run-button-label button-label label icon">Run Tests</span></slot>
+<details id="component-details" class="details">
+    <summary id="component-summary" class="summary">
+        <svg class="icon arrow-icon"><use href="#icon-definition_arrow"></use></svg>
+        <slot name="header">
+            <header id="header">
+                <span id="component-result-icon" class="result-icon"></span>
+                <span id="title"><slot name="title"><span id="title-text">Tests</span></slot></span>
+                <slot name="run-all-button">
+                    <button type="button" id="run-all-button" title="Run All Tests">
+                        <slot name="run-all-button-content">
+                            <slot name="run-all-button-icon"><svg class="icon arrow-icon run-button-icon run-all-button-icon"><use href="#icon-definition_arrow"></use></svg></slot>
+                            <slot name="run-all-button-label"><span class="run-all-button-label run-button-label button-label label icon">Run Tests</span></slot>
+                        </slot>
+                    </button>
                 </slot>
-            </button>
+                <slot name="header-details"></slot>
+            </header>
         </slot>
-        <slot name="header-details"></slot>
-    </header>
-</slot>
-<details id="required-before-any-details" class="hook">
-    <summary id="required-before-any-summary">
-        <svg class="icon arrow-icon"><use href="#icon-definition_arrow"></use></svg>
-        <span id="required-before-any-result-icon" class="result-icon"></span>
-        <span id="required-before-any-description" class="description">Results from Required Before Any Hook</span>
     </summary>
-    <div id="required-before-any-results" class="results"></div>
-</details>
-<details id="before-all-details" class="hook">
-    <summary id="before-all-summary">
-        <svg class="icon arrow-icon"><use href="#icon-definition_arrow"></use></svg>
-        <span id="before-all-result-icon" class="result-icon"></span>
-        <span id="before-all-description" class="description">Results from Before All Hook</span>
-    </summary>
-    <div id="before-all-results" class="results"></div>
-</details>
-<div id="tests"></div>
-<details id="after-all-details" class="hook">
-    <summary id="after-all-summary">
-        <svg class="icon arrow-icon"><use href="#icon-definition_arrow"></use></svg>
-        <span id="after-all-result-icon" class="result-icon"></span>
-        <span id="after-all-description" class="description">Results from After All Hook</span>
-    </summary>
-    <div id="after-all-results" class="results"></div>
-</details>
-<details id="required-after-any-details" class="hook">
-    <summary id="required-after-any-summary">
-        <svg class="icon arrow-icon"><use href="#icon-definition_arrow"></use></svg>
-        <span id="required-after-any-result-icon" class="result-icon"></span>
-        <span id="required-after-any-description" class="description">Results from Required After Any Hook</span>
-    </summary>
-    <div id="required-after-any-results" class="results"></div>
+    <div id="component-content" class="content">
+        <details id="required-before-any-details" class="hook">
+            <summary id="required-before-any-summary">
+                <svg class="icon arrow-icon"><use href="#icon-definition_arrow"></use></svg>
+                <span id="required-before-any-result-icon" class="result-icon"></span>
+                <span id="required-before-any-description" class="description hook-name">Required Before Any Hook</span>
+            </summary>
+            <div id="required-before-any-results" class="results"></div>
+        </details>
+        <details id="before-all-details" class="hook">
+            <summary id="before-all-summary">
+                <svg class="icon arrow-icon"><use href="#icon-definition_arrow"></use></svg>
+                <span id="before-all-result-icon" class="result-icon"></span>
+                <span id="before-all-description" class="description hook-name">Before All Hook</span>
+            </summary>
+            <div id="before-all-results" class="results"></div>
+        </details>
+        <div id="tests"></div>
+        <details id="after-all-details" class="hook">
+            <summary id="after-all-summary">
+                <svg class="icon arrow-icon"><use href="#icon-definition_arrow"></use></svg>
+                <span id="after-all-result-icon" class="result-icon"></span>
+                <span id="after-all-description" class="description hook-name">After All Hook</span>
+            </summary>
+            <div id="after-all-results" class="results"></div>
+        </details>
+        <details id="required-after-any-details" class="hook">
+            <summary id="required-after-any-summary">
+                <svg class="icon arrow-icon"><use href="#icon-definition_arrow"></use></svg>
+                <span id="required-after-any-result-icon" class="result-icon"></span>
+                <span id="required-after-any-description" class="description hook-name">Required After Any Hook</span>
+            </summary>
+            <div id="required-after-any-results" class="results"></div>
+        </details>
+    </div>
 </details>
 <div id="icon-definitions" style="display: none;">
     <svg id="icon-definition_arrow" viewBox="0 0 8 8" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">

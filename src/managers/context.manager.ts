@@ -125,15 +125,28 @@ export class ContextManager
     shouldContinueRunningTests: boolean = true;
     async runTests(tests: CodeTestElement[])
     {
-        this.codeTestsElement.dispatchEvent(new CustomEvent(CodeTestEvent.BeforeAll, { bubbles: true, composed: true }));
+        const allowTests = this.codeTestsElement.dispatchEvent(new CustomEvent(CodeTestEvent.BeforeAll, { bubbles: true, composed: true, cancelable: true }));
+        if(allowTests == false) { throw new Error("Tests have been prevented."); }
 
         this.reset();
 
-        const inOrder = this.codeTestsElement.hasAttribute('in-order');
-
         await this.runHook('requiredBeforeAnyState');
+        if(this.shouldContinueRunningTests == false)
+        {
+            await this.runHook('requiredAfterAnyState');
+            this.codeTestsElement.dispatchEvent(new CustomEvent(CodeTestEvent.AfterAll, { bubbles: true, composed: true }));
+            return;
+        }
         await this.runHook('beforeAllState');
+        // @ts-expect-error ts doesn't realize that this may have been set to false in runTest
+        if(this.shouldContinueRunningTests == false)
+        {
+            await this.runHook('requiredAfterAnyState');
+            this.codeTestsElement.dispatchEvent(new CustomEvent(CodeTestEvent.AfterAll, { bubbles: true, composed: true }));
+            return;
+        }
 
+        const inOrder = this.codeTestsElement.getAttribute('ordered') != 'false';
         if(inOrder == false)
         {
             const promises = tests.map(item => this.runTest(item, true));
@@ -144,29 +157,22 @@ export class ContextManager
             for(let i = 0; i < tests.length; i++)
             {
                 const test = tests[i];
+                // @ts-expect-error ts doesn't realize that this may have been set to false in runTest
                 if(this.shouldContinueRunningTests == false) { break; }                
                 await this.runTest(test, true);
             }
         }
+
+        // @ts-expect-error ts doesn't realize that this may have been set to false in runTest
         if(this.shouldContinueRunningTests == false)
         { 
             await this.runHook('requiredAfterAnyState');
-            this.codeTestsElement.setStateProperties({
-                isRunning: false,
-            });
             this.codeTestsElement.dispatchEvent(new CustomEvent(CodeTestEvent.AfterAll, { bubbles: true, composed: true }));
             return;
         }
         
         await this.runHook('afterAllState');
         await this.runHook('requiredAfterAnyState');
-
-
-        const failedTests = this.codeTestsElement.findElements('[success="false"]');
-        this.codeTestsElement.setStateProperties({
-            groupResultType: failedTests.length == 0 ? 'success' : 'fail',
-            isRunning: false,
-        });
         this.codeTestsElement.dispatchEvent(new CustomEvent(CodeTestEvent.AfterAll, { bubbles: true, composed: true }));
     }
     async runTest(test: CodeTestElement|undefined, inLoop: boolean)
@@ -222,29 +228,33 @@ export class ContextManager
         // onContext, onReset hooks
         // user reset after fail
         // reload tests
-        // after all hook doesn't error correctly
-
+        // prompt
+        // expect
+        // footer report
+        // passed/total; failed/total; pass percentage; execution time;
+        // hook icon
+        // cancel icon
+        // handle has-hook classes in render
         
 
         let hookResult: TestResultType;
         try
         {
             // if(this.codeTestsElement.state.isCanceled == true) { throw new Error("Tests have been cancelled"); }
-            if(this.shouldContinueRunningTests == false) { throw new Error("Tests have been disabled from continuing to run."); }
-            this.codeTestsElement.setTestStateProperties(testStateName, { isRunning: true });
+            if(this.shouldContinueRunningTests == false 
+            && (testStateName != 'requiredAfterAnyState'
+               || this.codeTestsElement.getAttribute('required-after') == 'error')
+            ) { throw new Error("Tests have been disabled from continuing to run."); }
+
             if(test != null) { test.setTestStateProperties(testStateName as any, { isRunning: true }); }
+            this.codeTestsElement.setTestStateProperties(testStateName, { isRunning: true });
 
             hookResult = await testState.test(this.codeTestsElement, this.codeTestsElement);
 
-            this.codeTestsElement.setTestStateProperties(testStateName, { isRunning: false, hasRun: true });
             if(test != null) { test.setTestStateProperties(testStateName as any, { isRunning: false, hasRun: true  }); }
+            this.codeTestsElement.setTestStateProperties(testStateName, { isRunning: false, hasRun: true });
 
             const hookParsedResult = this.parseTestResult(hookResult, true, undefined);
-
-            this.codeTestsElement.setTestStateProperties(testStateName, { 
-                resultCategory: hookParsedResult.resultCategory,
-                resultContent: hookParsedResult.result
-            });
             
             if(test != null)
             {
@@ -253,6 +263,11 @@ export class ContextManager
                     resultContent: hookParsedResult.result
                 });
             }
+
+            this.codeTestsElement.setTestStateProperties(testStateName, { 
+                resultCategory: hookParsedResult.resultCategory,
+                resultContent: hookParsedResult.result
+            });
         }
         catch(error)
         {
@@ -260,7 +275,9 @@ export class ContextManager
             this.shouldContinueRunningTests = false;
             hookResult = { success: false, value: `Failed: ${(error as Error).message}` }
             const errorParsedResult = this.parseTestResult(hookResult, false, error as Error);
-            if(test != null) { test.setTestStateProperties(testStateName as any, 
+            
+            if(test != null) { 
+                test.setTestStateProperties(testStateName as any, 
                 { 
                     isRunning: false,
                     hasRun: true,
@@ -268,9 +285,16 @@ export class ContextManager
                     resultCategory: errorParsedResult.resultCategory,
                 }); 
             }
+            this.codeTestsElement.setTestStateProperties(testStateName, { 
+                isRunning: false,
+                hasRun: true,
+                resultCategory: errorParsedResult.resultCategory,
+                resultContent: errorParsedResult.result
+            });
         }
         finally
         {
+            this.codeTestsElement.dispatchEvent(new CustomEvent(CodeTestEvent.AfterHook, { bubbles: true, composed: true, detail: hookResult }));
             return hookResult;
         }
     }
@@ -345,92 +369,6 @@ export class ContextManager
 
         throw new Error("Unable to parse result type: Unknown result type");
     }
-
-
-    // #handleHookResult(result: TestResultType, finishedTest: boolean, beforeOrAfter: 'before'|'after', required: boolean, error?: Error)
-    // {
-    //     if(result instanceof HTMLElement)
-    //     {
-    //         this.#setHookResult(result, finishedTest, beforeOrAfter, required);
-    //     }
-    //     else 
-    //     {
-    //         let defaultResult: HTMLElement;
-    //         if(result == undefined)
-    //         {
-    //             defaultResult = this.#createDefaultResult(finishedTest == true ? 'Hook Ran Successfully' : `Failed${(error != null) ? `:\n${error.message}` : ''}`, finishedTest);
-    //             this.#setHookResult(defaultResult, finishedTest, beforeOrAfter, required);
-    //         }
-    //         else if(typeof result == 'string')
-    //         {
-    //             defaultResult = this.#createDefaultResult(`${result}${error == null ? '' : `:\n${error.message}`}`, finishedTest);
-    //             this.#setHookResult(defaultResult, finishedTest, beforeOrAfter, required);
-    //         }
-    //         else if(typeof result == 'object')
-    //         {
-    //             const objectResult = result as any;
-    //             if(objectResult.success != undefined
-    //             && objectResult.expected != undefined
-    //             && objectResult.value != undefined)
-    //             {
-    //                 defaultResult = this.#createDefaultResult(
-    //                     `${(objectResult.success == true) ?'Success:' : 'Fail:'}\nExpected:${objectResult.expected}\nResult:${objectResult.value}`,
-    //                     objectResult.success
-    //                 );
-    //                 this.#setHookResult(defaultResult, finishedTest, beforeOrAfter, required);
-    //             }
-    //         }
-    //     }
-
-    //     const detailsElement = this.findElement<HTMLDetailsElement>(`#${beforeOrAfter}-all-details`);
-    //     if(detailsElement != null)
-    //     {
-    //         detailsElement.open = true;
-    //     }
-    // }
-
-    
-    // #setHookResult(valueElement: HTMLElement, success: boolean, beforeOrAfter: 'before'|'after', required: boolean)
-    // {
-    //     const selector = (required == true)
-    //     ? `required-${beforeOrAfter}-any`
-    //     : `${beforeOrAfter}-all`;
-    //     const detailsElement = this.findElement(`#${selector}-details`);
-    //     const resultsElement = this.findElement(`#${selector}-results`);
-    //     detailsElement.setAttribute('success', success == true ? 'true' : 'false');
-    //     detailsElement.classList.toggle('success', success);
-    //     detailsElement.part.toggle('success', success);
-    //     detailsElement.classList.toggle('fail', !success);
-    //     detailsElement.part.toggle('fail', !success);
-
-    //     resultsElement.innerHTML = '';
-    //     resultsElement.appendChild(valueElement);
-    // }
-
-
-    // #addProcessError(message: string, error?: unknown)
-    // {
-    //     if(error instanceof Error)
-    //     {
-    //         message += `\n${error.message}`;
-
-    //         console.error(error);
-    //     }
-        
-    //     const errorElement = document.createElement('li');
-    //     errorElement.classList.add('error', 'process-error');
-    //     errorElement.part.add('error', 'process-error');
-    //     const codeElement = document.createElement('code');
-    //     codeElement.classList.add('code', 'process-error-code');
-    //     codeElement.part.add('code', 'process-error-code');
-    //     const preElement = document.createElement('pre');
-    //     preElement.classList.add('pre', 'process-error-pre');
-    //     preElement.part.add('pre', 'process-error-pre');
-    //     preElement.textContent = message;
-    //     codeElement.append(preElement);
-    //     errorElement.append(codeElement);
-    //     this.findElement('#tests').append(errorElement);
-    // }
 
     reset()
     {

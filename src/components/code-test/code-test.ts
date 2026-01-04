@@ -169,7 +169,7 @@ export class CodeTestElement extends HTMLElement
                         <summary class="before-each-summary" part="before-each-summary">
                             <svg class="icon arrow-icon"><use href="#icon-definition_arrow"></use></svg>
                             <div class="before-each-result-icon result-icon${this.state.beforeEachState.resultCategory != 'none' ? ` ${this.state.beforeEachState.resultCategory}` : ''}" part="before-each-result-icon"></div>
-                            <span class="before-each-description description">Before Each Hook</span>
+                            <span class="before-each-description description hook-name">Before Each Hook</span>
                         </summary>
                         <div class="before-each-result result message" part="before-each-result result message">
                             ${typeof this.state.beforeEachState.resultContent != 'string'
@@ -205,7 +205,7 @@ export class CodeTestElement extends HTMLElement
                         <summary class="after-each-summary" part="after-each-summary">
                             <svg class="icon arrow-icon"><use href="#icon-definition_arrow"></use></svg>
                             <div class="after-each-result-icon result-icon${this.state.afterEachState.resultCategory != 'none' ? ` ${this.state.afterEachState.resultCategory}` : ''}" part="before-each-result-icon"></div>
-                            <span class="after-each-description description">After Each Hook</span>
+                            <span class="after-each-description description hook-name">After Each Hook</span>
                         </summary>
                         <div class="after-each-result result message" part="after-each-result result message">
                             ${typeof this.state.afterEachState.resultContent != 'string'
@@ -259,15 +259,16 @@ export class CodeTestElement extends HTMLElement
         let stateProperties: Partial<CodeTestState> = {};
         try
         {
-            const allowTest = this.dispatchEvent(new CustomEvent(CodeTestEvent.BeforeTest, { bubbles: true, cancelable: true, composed: true, detail: { testElement: this } }));
-          
             if(contextManager.shouldContinueRunningTests == false) { throw new Error("Tests have been disabled from continuing to run."); }
 
+            const allowTest = this.dispatchEvent(new CustomEvent(CodeTestEvent.BeforeTest, { bubbles: true, cancelable: true, composed: true, detail: { testElement: this } }));
             if(allowTest == false) { throw new Error("Test has been prevented."); }
 
             this.setTestStateProperties('testState', { isRunning: true });
+            contextManager.codeTestsElement.setState(contextManager.codeTestsElement.state); // render hack so that codeTestsElement.isRunning() has up-to-date information
             testResult = await this.state.testState.test(contextManager.codeTestsElement, this);
             this.setTestStateProperties('testState', { isRunning: false, hasRun: true });
+            contextManager.codeTestsElement.setState(contextManager.codeTestsElement.state); // render hack so that codeTestsElement.isRunning() has up-to-date information
             const testParsedResult = contextManager.parseTestResult(testResult, true);
 
             stateProperties = {
@@ -276,7 +277,7 @@ export class CodeTestElement extends HTMLElement
                     resultContent: testParsedResult.result,
                     resultCategory: testParsedResult.resultCategory,
                     hasRun: this.state.testState.hasRun,
-                    isRunning: this.state.testState.isRunning,
+                    isRunning: false,
                 }
             };
         }
@@ -290,7 +291,7 @@ export class CodeTestElement extends HTMLElement
                     resultContent: errorParsedResult.result,
                     resultCategory: errorParsedResult.resultCategory,
                     hasRun: this.state.testState.hasRun,
-                    isRunning: this.state.testState.isRunning,
+                    isRunning: false,
                 }
             };
             console.error(error);
@@ -299,6 +300,7 @@ export class CodeTestElement extends HTMLElement
         finally
         {
             this.setStateProperties({ ...stateProperties });
+            contextManager.codeTestsElement.setState(contextManager.codeTestsElement.state); // render hack so that codeTestsElement.isRunning() has up-to-date information
             this.dispatchEvent(new CustomEvent(CodeTestEvent.AfterTest, { bubbles: true, cancelable: true, composed: true, detail: { testElement: this } }));
         }
     }
