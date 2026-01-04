@@ -268,29 +268,40 @@ export class TestManager
         // }
     }
 
-    async runHook(contextManager: ContextManager, hook: () => TestResultType)
-    {
-        if(contextManager.codeTestsElement.state.isCanceled == true) { throw new Error("Tests have been cancelled"); }
-        return await hook(contextManager.codeTestsElement);
-        //     try
-        //     {
-        //         const requiredAfterAnyHookElement = this.findElement(`#required-after-any-details`);
-        //         requiredAfterAnyHookElement.classList.add('running');
-        //         requiredAfterAnyHookElement.part.add('running');
+    // async runHook(contextManager: ContextManager, hook: Test)
+    // {
+    //     try
+    //     {
+    //         if(contextManager.codeTestsElement.state.isCanceled == true) { throw new Error("Tests have been cancelled"); }
+    //         return await hook(contextManager.codeTestsElement, contextManager.codeTestsElement);
+    //     }
+    //     catch(error)
+    //     {
+    //         console.error(error);
+    //         contextManager.shouldContinueRunningTests = false;
+    //         return { success: false, value: `Failed: ${(error as Error).message}` }
+    //     }
 
-        //         //@ts-expect-error ts doesn't understand that this value can change while awaiting
-        //         if(this.isCanceled == true) { throw new Error("Test has been cancelled"); }
-        //         hookResult = await requiredAfterHook(this, requiredAfterAnyHookElement);
+    //     // return await hook(contextManager.codeTestsElement);
+    //     //     try
+    //     //     {
+    //     //         const requiredAfterAnyHookElement = this.findElement(`#required-after-any-details`);
+    //     //         requiredAfterAnyHookElement.classList.add('running');
+    //     //         requiredAfterAnyHookElement.part.add('running');
 
-        //         this.#handleHookResult(hookResult, true, 'after', true);
-        //         requiredAfterAnyHookElement.part.remove('running');
-        //         requiredAfterAnyHookElement.classList.remove('running');
-        //     }
-        //     catch(error)
-        //     {
-        //         this.#handleHookResult(hookResult, false, 'after', true, error as Error);
-        //         console.error(error);
-        //         this.#continueRunningTests = false;
-        //     }
-    }
+    //     //         //@ts-expect-error ts doesn't understand that this value can change while awaiting
+    //     //         if(this.isCanceled == true) { throw new Error("Test has been cancelled"); }
+    //     //         hookResult = await requiredAfterHook(this, requiredAfterAnyHookElement);
+
+    //     //         this.#handleHookResult(hookResult, true, 'after', true);
+    //     //         requiredAfterAnyHookElement.part.remove('running');
+    //     //         requiredAfterAnyHookElement.classList.remove('running');
+    //     //     }
+    //     //     catch(error)
+    //     //     {
+    //     //         this.#handleHookResult(hookResult, false, 'after', true, error as Error);
+    //     //         console.error(error);
+    //     //         this.#continueRunningTests = false;
+    //     //     }
+    // }
 }

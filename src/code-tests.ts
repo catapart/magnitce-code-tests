@@ -16,6 +16,8 @@ export type CodeTestsState =
     
     beforeAllState?: TestState,
     afterAllState?: TestState,
+    beforeEachState?: TestState,
+    afterEachState?: TestState,
     requiredBeforeAnyState?: TestState,
     requiredAfterAnyState?: TestState
 }
@@ -48,6 +50,8 @@ export class CodeTestsElement extends HTMLElement
         hasRun: false,
         beforeAllState: undefined,
         afterAllState: undefined,
+        beforeEachState: undefined,
+        afterEachState: undefined,
         requiredBeforeAnyState: undefined,
         requiredAfterAnyState: undefined,
     };
@@ -65,8 +69,38 @@ export class CodeTestsElement extends HTMLElement
         });
     }
 
+    setTestStateProperties(key: keyof CodeTestsState, state: Partial<TestState>)
+    {
+        if(this.state[key] == null) { return; }
+
+        this.setState({
+            ...this.state,
+            [key]: {
+                ...(this.state as any)[key],
+                ...state,
+            }
+        });
+    }
+
     findElement<T extends HTMLElement = HTMLElement>(query: string) { return this.shadowRoot!.querySelector(query) as T; }
     findElements<T extends HTMLElement = HTMLElement>(query: string) { return Array.from(this.shadowRoot!.querySelectorAll(query) as Iterable<T>) as Array<T>; }
+
+    
+    isRunning()
+    {
+        return false;
+        // return this.state.testState?.isRunning == true
+        // || this.state.beforeEachState?.isRunning == true
+        // || this.state.afterEachState?.isRunning == true;
+    }
+    
+    groupResultType()
+    {
+        return 'none';
+        // return this.state.testState?.isRunning == true
+        // || this.state.beforeEachState?.isRunning == true
+        // || this.state.afterEachState?.isRunning == true;
+    }
 
     #contextManager: ContextManager;
 
@@ -127,7 +161,7 @@ export class CodeTestsElement extends HTMLElement
         if(runButton == null) { return; }
 
         const test = runButton.closest<CodeTestElement>('code-test') ?? undefined;
-        this.#contextManager.runTest(test);
+        this.#contextManager.runTest(test, false);
 
         // if(parentListItem == null)
         // {
@@ -187,19 +221,39 @@ export class CodeTestsElement extends HTMLElement
             : "Run Tests";
         }
 
-        const beforeAllHookElement = this.findElement(`#before-all-details`);
-        beforeAllHookElement.toggleAttribute('success', this.state.beforeAllState?.resultCategory == 'success');
-        beforeAllHookElement.classList.toggle('success', this.state.beforeAllState?.resultCategory == 'success');
-        beforeAllHookElement.part.toggle('success', this.state.beforeAllState?.resultCategory == 'success');
-        beforeAllHookElement.classList.toggle('fail', this.state.beforeAllState?.resultCategory == 'fail');
-        beforeAllHookElement.part.toggle('fail', this.state.beforeAllState?.resultCategory == 'fail');
+        this.#renderHook(this.state.beforeAllState, '#before-all-results');
+        this.#renderHook(this.state.afterAllState, '#after-all-results');
+        this.#renderHook(this.state.requiredBeforeAnyState, '#required-before-any-results');
+        this.#renderHook(this.state.requiredAfterAnyState, '#required-after-any-results');
+
+        //todo: convert to toggles
+        // this.classList.remove('has-before-hook', 'has-before-all-hook', 'has-before-each-hook', 'has-required-before-hook');
+        // this.part.remove('has-before-hook', 'has-before-all-hook', 'has-before-each-hook', 'has-required-before-hook');
+        // this.classList.remove('has-after-hook', 'has-after-all-hook', 'has-after-each-hook', 'has-required-after-hook');
+        // this.part.remove('has-after-hook', 'has-after-all-hook', 'has-after-each-hook', 'has-required-after-hook');
+    }
+    #renderHook(hookState: TestState|undefined, elementSelector: string)
+    {
+        const resultsElement = this.findElement(elementSelector);
+        if(hookState?.resultContent instanceof HTMLElement)
+        {
+            resultsElement.append(hookState.resultContent);
+        }
+        else if(typeof hookState?.resultContent == 'string')
+        {
+            resultsElement.innerHTML = hookState.resultContent;
+        }
         
-        const afterAllHookElement = this.findElement(`#after-all-details`);
-        afterAllHookElement.toggleAttribute('success', this.state.afterAllState?.resultCategory == 'success');
-        afterAllHookElement.classList.toggle('success', this.state.afterAllState?.resultCategory == 'success');
-        afterAllHookElement.part.toggle('success', this.state.afterAllState?.resultCategory == 'success');
-        afterAllHookElement.classList.toggle('fail', this.state.afterAllState?.resultCategory == 'fail');
-        afterAllHookElement.part.toggle('fail', this.state.afterAllState?.resultCategory == 'fail');
+        const detailsElement = resultsElement.closest('details')!;
+        
+        detailsElement.toggleAttribute('open', hookState != undefined && hookState.resultCategory != 'none');
+        detailsElement.classList.toggle('running', hookState?.isRunning == true);
+        detailsElement.part.toggle('running', hookState?.isRunning == true);
+        detailsElement.toggleAttribute('success', hookState?.resultCategory == 'success');
+        detailsElement.classList.toggle('success', hookState?.resultCategory == 'success');
+        detailsElement.part.toggle('success', hookState?.resultCategory == 'success');
+        detailsElement.classList.toggle('fail', hookState?.resultCategory == 'fail');
+        detailsElement.part.toggle('fail', hookState?.resultCategory == 'fail');
     }
 
     async runTests()
@@ -219,22 +273,32 @@ export class CodeTestsElement extends HTMLElement
 
         const beforeAllState: TestState|undefined = (this.state.beforeAllState == undefined)
         ? undefined
-        : { resultContent: '', resultCategory: 'none', test: this.state.beforeAllState.test };
+        : { resultContent: '', resultCategory: 'none', test: this.state.beforeAllState.test, isRunning: false, hasRun: false };
         const afterAllState: TestState|undefined = (this.state.afterAllState == undefined)
         ? undefined
-        : { resultContent: '', resultCategory: 'none', test: this.state.afterAllState.test };
+        : { resultContent: '', resultCategory: 'none', test: this.state.afterAllState.test, isRunning: false, hasRun: false };
+        const beforeEachState: TestState|undefined = (this.state.beforeEachState == undefined)
+        ? undefined
+        : { resultContent: '', resultCategory: 'none', test: this.state.beforeEachState.test, isRunning: false, hasRun: false };
+        const afterEachState: TestState|undefined = (this.state.afterEachState == undefined)
+        ? undefined
+        : { resultContent: '', resultCategory: 'none', test: this.state.afterEachState.test, isRunning: false, hasRun: false };
         const requiredBeforeAnyState: TestState|undefined = (this.state.requiredBeforeAnyState == undefined)
         ? undefined
-        : { resultContent: '', resultCategory: 'none', test: this.state.requiredBeforeAnyState.test };
+        : { resultContent: '', resultCategory: 'none', test: this.state.requiredBeforeAnyState.test, isRunning: false, hasRun: false };
         const requiredAfterAnyState: TestState|undefined = (this.state.requiredAfterAnyState == undefined)
         ? undefined
-        : { resultContent: '', resultCategory: 'none', test: this.state.requiredAfterAnyState.test };
+        : { resultContent: '', resultCategory: 'none', test: this.state.requiredAfterAnyState.test, isRunning: false, hasRun: false };
 
         this.setStateProperties({
             groupResultType: 'none',
+
+            isCanceled: false,
             
             beforeAllState,
             afterAllState,
+            beforeEachState,
+            afterEachState,
             requiredAfterAnyState,
             requiredBeforeAnyState,
         });

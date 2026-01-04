@@ -78,7 +78,7 @@ summary > .arrow-icon
 {
     background: var(--arrow-icon);
     transform: rotate(-90deg);
-    transition: transform ease-out 200ms;
+    transition: transform ease-out 90ms;
     width: .5em;
     height: .5em;
 }
@@ -107,14 +107,16 @@ details[open] > summary > .arrow-icon
     font-size: 10px;
 }
 
-.test.running .result-icon
+.test.running .test-summary > .result-icon
 ,.hook.running .result-icon
+,.processing-details.running .processing-result-icon
 {
     border: var(--border-process);
     background: var(--surface-process);
 }
-.test.success .result-icon
+.test.success .test-summary > .result-icon
 ,.hook.success .result-icon
+,.processing-details.success .processing-result-icon
 {
     border: var(--border-success);
     background: var(--surface-success)
@@ -123,8 +125,9 @@ details[open] > summary > .arrow-icon
     background-position: center;
     background-size: var(--icon-size, 12px) var(--icon-size, 12px);
 }
-.test.fail .result-icon
+.test.fail .test-summary > .result-icon
 ,.hook.fail .result-icon
+,.processing-details.fail .processing-result-icon
 {
     border: var(--border-fail);
     background: var(--surface-fail)
@@ -134,25 +137,58 @@ details[open] > summary > .arrow-icon
     background-position: center;
     transform: rotate(175deg);
 }
-.test:is(.success,.fail) .result-icon::before
+.test:is(.success,.fail) .test-summary > .result-icon::before
 ,.hook:is(.success,.fail) .result-icon::before
+,.processing-details:is(.success,.fail) .processing-result-icon::before
 {
     display: none;
 }
-.test:is(.running) .result-icon::before
+.test:is(.running) .test-summary > .result-icon::before
 ,.hook:is(.running) .result-icon::before
+,.processing-details:is(.running) .processing-result-icon::before
 {
     content: '';
     --color: var(--text-process, currentColor);
     --animation-timing-function: linear;
     --animation-duration: 2s;
-    width: var(--icon-size, 18px);
-    height: var(--icon-size, 18px);
-    mask-image: radial-gradient(circle at 50% 50%, transparent calc(var(--icon-size, 18px) / 3), black calc(var(--icon-size, 18px) / 3));
+    width: var(--icon-size, 14px);
+    height: var(--icon-size, 14px);
+    mask-image: radial-gradient(circle at 50% 50%, transparent calc(var(--icon-size, 14px) / 3), black calc(var(--icon-size, 14px) / 3));
     background-image: conic-gradient(transparent, transparent 135deg, var(--color));
     border-radius: 50%;
     animation: var(--animation-timing-function) var(--animation-duration) infinite spin;
     margin: 2px;
+}
+
+/* Smaller Result icon settings for sub-test icons */
+.before-each-result-icon
+,.after-each-result-icon
+,.processing-result-icon
+{
+    --background-size: 12px;
+}
+.before-each-result-icon::before
+,.after-each-result-icon::before
+,.processing-result-icon::before
+{
+    font-size: 9px;
+}
+.hook.success .before-each-result-icon
+,.hook.success .after-each-result-icon
+,.processing-details.success .processing-result-icon
+{
+    --icon-size: 8px;
+}
+.hook.fail .before-each-result-icon
+,.hook.fail .after-each-result-icon
+,.processing-details.fail .processing-result-icon
+{
+    --icon-size: 12px;
+}
+.hook:is(.running) .result-icon::before
+,.processing-details:is(.running) .processing-result-icon::before
+{
+    --icon-size: 9px;
 }
 
 /* Hook Display */
@@ -165,8 +201,20 @@ details[open] > summary > .arrow-icon
 {
     display: initial;
 }
+:host(.has-before-each-hook) .before-each-details
+,:host(.has-after-each-hook) .after-each-details
+{
+    display: initial;
+}
 :host(.has-required-before-hook) #required-before-any-details
 ,:host(.has-required-after-hook) #required-after-any-details
 {
     display: initial;
+}
+
+
+@keyframes spin
+{
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
