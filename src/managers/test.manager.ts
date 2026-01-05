@@ -13,6 +13,8 @@ export type Hooks = {
     [Hook.AfterEach]?: Test,
     [Hook.RequiredBeforeAny]?: Test,
     [Hook.RequiredAfterAny]?: Test,
+    [Hook.Reset]?: Test,
+    [Hook.Context]?: Test,
 };
 
 export class TestManager
@@ -68,6 +70,18 @@ export class TestManager
         {
             hooks[Hook.RequiredAfterAny] = requiredAfterAny;
             delete tests[Hook.RequiredAfterAny];
+        }
+        const resetHook = tests[Hook.Reset];
+        if(resetHook != null)
+        {
+            hooks[Hook.Reset] = resetHook;
+            delete tests[Hook.Reset];
+        }
+        const contextHook = tests[Hook.Context];
+        if(contextHook != null)
+        {
+            hooks[Hook.Context] = contextHook;
+            delete tests[Hook.Context];
         }
 
         this.#tests = new Map(Object.entries(tests));

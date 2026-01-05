@@ -7,6 +7,7 @@ export const CodeTestEvent =
     BeforeHook: 'beforehook',
     AfterHook: 'afterhook',
     Cancel: 'cancel',
+    Context: 'context',
     Reset: 'reset',
 }
 export type CodeTestEventType = typeof CodeTestEvent[keyof typeof CodeTestEvent];

@@ -2,6 +2,7 @@ import type { CodeTestsElement } from '../../code-tests';
 import { NOTESTDEFINED } from '../../constants';
 import type { ContextManager } from '../../managers/context.manager';
 import { CodeTestEvent } from '../../maps/code-test-event';
+import type { TestContext } from '../../types/test-context.type';
 import type { TestResultType } from '../../types/test-result.type';
 import type { Test } from '../../types/test.type';
 import { default as style } from './code-test.css?raw';
@@ -241,7 +242,7 @@ export class CodeTestElement extends HTMLElement
         // }
     }
 
-    async runTest(contextManager: ContextManager)
+    async runTest(contextManager: ContextManager, testContext: TestContext)
     {
         if(this.state.testState?.test == null) { return; }
 
@@ -258,7 +259,7 @@ export class CodeTestElement extends HTMLElement
 
             this.setTestStateProperties('testState', { isRunning: true });
             contextManager.codeTestsElement.setState(contextManager.codeTestsElement.state); // render hack so that codeTestsElement.isRunning() has up-to-date information
-            testResult = await this.state.testState.test(contextManager.codeTestsElement, this);
+            testResult = await this.state.testState.test(contextManager.codeTestsElement, this, testContext);
             this.setTestStateProperties('testState', { isRunning: false, hasRun: true });
             contextManager.codeTestsElement.setState(contextManager.codeTestsElement.state); // render hack so that codeTestsElement.isRunning() has up-to-date information
             const testParsedResult = contextManager.parseTestResult(testResult, true);

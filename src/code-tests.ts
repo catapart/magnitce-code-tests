@@ -6,6 +6,7 @@ import { assignClassAndIdToPart } from 'ce-part-utils';
 import { ContextManager } from './managers/context.manager';
 import { CodeTestElement, type TestResultState, type TestState } from './components/code-test/code-test';
 import { CodeTestEvent } from './maps/code-test-event';
+import type { Test } from './types/test.type';
 
 export type CodeTestsState = 
 {
@@ -21,7 +22,9 @@ export type CodeTestsState =
     beforeEachState?: TestState,
     afterEachState?: TestState,
     requiredBeforeAnyState?: TestState,
-    requiredAfterAnyState?: TestState
+    requiredAfterAnyState?: TestState,
+    resetHook?: Test,
+    contextHook?: Test,
 }
 
 export const Hook = 
@@ -32,6 +35,8 @@ export const Hook =
     AfterEach: 'aftereach',
     RequiredBeforeAny: 'requiredbeforeany',
     RequiredAfterAny: 'requiredafterany',
+    Reset: 'reset',
+    Context: 'context',
 } as const;
 export type HookType = typeof Hook[keyof typeof Hook];
 
@@ -57,6 +62,8 @@ export class CodeTestsElement extends HTMLElement
         afterEachState: undefined,
         requiredBeforeAnyState: undefined,
         requiredAfterAnyState: undefined,
+        resetHook: undefined,
+        contextHook: undefined,
     };
         
     setState(state: CodeTestsState)
@@ -92,8 +99,6 @@ export class CodeTestsElement extends HTMLElement
     getIsRunning()
     {
         const testsAreRunning = this.findElements<CodeTestElement>('code-test').find(item => item.isRunning() == true) != null;
-
-        console.log(testsAreRunning)
 
         return testsAreRunning == true
         || this.state.requiredBeforeAnyState?.isRunning == true
@@ -341,7 +346,7 @@ export class CodeTestsElement extends HTMLElement
         return this.#contextManager.runTests(tests);
     }
 
-    reset()
+    async reset()
     {
         const tests = this.findElements<CodeTestElement>('code-test');
         for(let i = 0; i < tests.length; i++)
@@ -397,6 +402,11 @@ export class CodeTestsElement extends HTMLElement
         });
 
         this.#contextManager.shouldContinueRunningTests = true;
+
+        if(this.state.resetHook != null)
+        {
+            await this.state.resetHook(this, this, { isCanceled: false, detail: {} });
+        }
 
         this.dispatchEvent(new CustomEvent(CodeTestEvent.Reset, { bubbles: true, composed: true }));
     }

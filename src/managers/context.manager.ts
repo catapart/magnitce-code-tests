@@ -2,6 +2,7 @@ import { CodeTestsElement, Hook, type CodeTestsState } from "../code-tests";
 import { CodeTestElement, type TestResultCategory, type TestState } from "../components/code-test/code-test";
 import { NOTESTDEFINED } from "../constants";
 import { CodeTestEvent } from "../maps/code-test-event";
+import type { TestContext } from "../types/test-context.type";
 import type { TestResultType } from "../types/test-result.type";
 import type { Test } from "../types/test.type";
 import { TestManager } from "./test.manager";
@@ -70,14 +71,16 @@ export class ContextManager
             const afterEachState: TestState|undefined = (afterEach == null) ? undefined : { resultCategory: 'none', resultContent: '', test: afterEach, hasRun: false, isRunning: false };
             const requiredBeforeAnyState: TestState|undefined = (requiredBeforeAny == null) ? undefined : { resultCategory: 'none', resultContent: '', test: requiredBeforeAny, hasRun: false, isRunning: false };
             const requiredAfterAnyState: TestState|undefined = (requiredAfterAny == null) ? undefined : { resultCategory: 'none', resultContent: '', test: requiredAfterAny, hasRun: false, isRunning: false };
-
+            
             this.codeTestsElement.setStateProperties({
                 beforeAllState,
                 afterAllState,
                 beforeEachState,
                 afterEachState,
                 requiredBeforeAnyState,
-                requiredAfterAnyState
+                requiredAfterAnyState,
+                resetHook: hooks.reset,
+                contextHook: hooks.context,
             });
 
             for(const [description, test] of Object.entries(tests))
@@ -128,20 +131,22 @@ export class ContextManager
         const allowTests = this.codeTestsElement.dispatchEvent(new CustomEvent(CodeTestEvent.BeforeAll, { bubbles: true, composed: true, cancelable: true }));
         if(allowTests == false) { throw new Error("Tests have been prevented."); }
 
-        this.reset();
+        await this.codeTestsElement.reset();
 
-        await this.runHook('requiredBeforeAnyState');
+        const context = await this.createTestContext();
+
+        await this.runHook('requiredBeforeAnyState', undefined, context);
         if(this.shouldContinueRunningTests == false)
         {
-            await this.runHook('requiredAfterAnyState');
+            await this.runHook('requiredAfterAnyState', undefined, context);
             this.codeTestsElement.dispatchEvent(new CustomEvent(CodeTestEvent.AfterAll, { bubbles: true, composed: true }));
             return;
         }
-        await this.runHook('beforeAllState');
+        await this.runHook('beforeAllState', undefined, context);
         // @ts-expect-error ts doesn't realize that this may have been set to false in runTest
         if(this.shouldContinueRunningTests == false)
         {
-            await this.runHook('requiredAfterAnyState');
+            await this.runHook('requiredAfterAnyState', undefined, context);
             this.codeTestsElement.dispatchEvent(new CustomEvent(CodeTestEvent.AfterAll, { bubbles: true, composed: true }));
             return;
         }
@@ -149,7 +154,7 @@ export class ContextManager
         const inOrder = this.codeTestsElement.getAttribute('ordered') != 'false';
         if(inOrder == false)
         {
-            const promises = tests.map(item => this.runTest(item, true));
+            const promises = tests.map(item => this.runTest(item, true, context));
             await Promise.all(promises);
         }
         else
@@ -159,25 +164,27 @@ export class ContextManager
                 const test = tests[i];
                 // @ts-expect-error ts doesn't realize that this may have been set to false in runTest
                 if(this.shouldContinueRunningTests == false) { break; }                
-                await this.runTest(test, true);
+                await this.runTest(test, true, context);
             }
         }
 
         // @ts-expect-error ts doesn't realize that this may have been set to false in runTest
         if(this.shouldContinueRunningTests == false)
         { 
-            await this.runHook('requiredAfterAnyState');
+            await this.runHook('requiredAfterAnyState', undefined, context);
             this.codeTestsElement.dispatchEvent(new CustomEvent(CodeTestEvent.AfterAll, { bubbles: true, composed: true }));
             return;
         }
         
-        await this.runHook('afterAllState');
-        await this.runHook('requiredAfterAnyState');
+        await this.runHook('afterAllState', undefined, context);
+        await this.runHook('requiredAfterAnyState', undefined, context);
         this.codeTestsElement.dispatchEvent(new CustomEvent(CodeTestEvent.AfterAll, { bubbles: true, composed: true }));
     }
-    async runTest(test: CodeTestElement|undefined, inLoop: boolean)
+    async runTest(test: CodeTestElement|undefined, inLoop: boolean, testContext?: TestContext)
     {
         if(test == null) { return; }
+
+        testContext = testContext ?? await this.createTestContext();
 
         // if(inLoop == false)
         // {
@@ -190,50 +197,49 @@ export class ContextManager
 
         if(inLoop == false)
         { 
-            await this.runHook('requiredBeforeAnyState');
+            await this.runHook('requiredBeforeAnyState', undefined, testContext);
             if(this.shouldContinueRunningTests == false)
             {
-                if(inLoop == false) { await this.runHook('requiredAfterAnyState'); }
+                if(inLoop == false) { await this.runHook('requiredAfterAnyState', undefined, testContext); }
                 return;
             }
         }
 
-        await this.runHook('beforeEachState', test); 
+        await this.runHook('beforeEachState', test, testContext); 
         if(this.shouldContinueRunningTests == false)
         {
-            if(inLoop == false) { await this.runHook('requiredAfterAnyState'); }
+            if(inLoop == false) { await this.runHook('requiredAfterAnyState', undefined, testContext); }
             return;
         }
 
-        await test.runTest(this);
+        await test.runTest(this, testContext);
         // @ts-expect-error ts doesn't realize that this may have been set to false in runTest
         if(this.shouldContinueRunningTests == false)
         {
-            if(inLoop == false) { await this.runHook('requiredAfterAnyState'); }
+            if(inLoop == false) { await this.runHook('requiredAfterAnyState', undefined, testContext); }
             return;
         }
 
-        await this.runHook('afterEachState', test);
-        if(inLoop == false) { await this.runHook('requiredAfterAnyState'); }
+        await this.runHook('afterEachState', test, testContext);
+        if(inLoop == false) { await this.runHook('requiredAfterAnyState', undefined, testContext); }
     }
     
-    async runHook(testStateName: keyof Pick<CodeTestsState, 'requiredBeforeAnyState'|'requiredAfterAnyState'|'beforeEachState'|'afterEachState'|'beforeAllState'|'afterAllState'>, test?: CodeTestElement)
+    async runHook(testStateName: keyof Pick<CodeTestsState, 'requiredBeforeAnyState'|'requiredAfterAnyState'|'beforeEachState'|'afterEachState'|'beforeAllState'|'afterAllState'>, 
+        test: CodeTestElement|undefined,
+        testContext: TestContext)
     {
         const testState = this.codeTestsElement.state[testStateName];
         if(testState == null) { return NOTESTDEFINED; }
 
         // todo:
-        // figure out how to cancel
-        // add test context
-        // onContext, onReset hooks
+        // figure out how to cancel; update test context when cancel is called
+        // move all test resources into context: message/result element, parent test element, code tests element
         // reload tests
         // prompt
         // expect
         // footer report
         // passed/total; failed/total; pass percentage; execution time;
-        // hook icon
         // handle has-hook classes in render
-        // empty content
         // disable test run button while running
         
 
@@ -249,7 +255,7 @@ export class ContextManager
             if(test != null) { test.setTestStateProperties(testStateName as any, { isRunning: true }); }
             this.codeTestsElement.setTestStateProperties(testStateName, { isRunning: true });
 
-            hookResult = await testState.test(this.codeTestsElement, this.codeTestsElement);
+            hookResult = await testState.test(this.codeTestsElement, this.codeTestsElement, testContext);
 
             if(test != null) { test.setTestStateProperties(testStateName as any, { isRunning: false, hasRun: true  }); }
             this.codeTestsElement.setTestStateProperties(testStateName, { isRunning: false, hasRun: true });
@@ -370,15 +376,25 @@ export class ContextManager
         throw new Error("Unable to parse result type: Unknown result type");
     }
 
-    reset()
+    async createTestContext()
     {
-        this.shouldContinueRunningTests = true;
-        this.codeTestsElement.reset();
+        const context: TestContext = {
+            isCanceled: false,
+            detail: {},
+        };
+        
+        if(this.codeTestsElement.state.contextHook != null)
+        {
+            await this.codeTestsElement.state.contextHook(this.codeTestsElement, this.codeTestsElement, context);
+        }
+        this.codeTestsElement.dispatchEvent(new CustomEvent(CodeTestEvent.Context, { bubbles: true, composed: true, detail: { context } }));
+        return context;
     }
-    resetHook(hookName: keyof Pick<CodeTestsState, 'requiredBeforeAnyState'|'requiredAfterAnyState'|'beforeEachState'|'afterEachState'|'beforeAllState'|'afterAllState'>)
-    {
-        this.codeTestsElement.setTestStateProperties(hookName, { resultContent: '', resultCategory: 'none', hasRun: false });
-    }
+
+    // resetHook(hookName: keyof Pick<CodeTestsState, 'requiredBeforeAnyState'|'requiredAfterAnyState'|'beforeEachState'|'afterEachState'|'beforeAllState'|'afterAllState'>)
+    // {
+    //     this.codeTestsElement.setTestStateProperties(hookName, { resultContent: '', resultCategory: 'none', hasRun: false });
+    // }
 }
 
 /**
