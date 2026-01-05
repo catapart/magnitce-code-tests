@@ -51,6 +51,7 @@
 }
 
 #tests
+,#component-content
 {
     display: grid;
     gap: var(--gap);
@@ -64,6 +65,11 @@ button .arrow-icon
     height: .75em;
     transform: rotate(-90deg);
     margin-inline: 3px;
+}
+:host(.running) .run-all-button-icon
+,:host(.fail) .run-all-button-icon
+{
+    transform: rotate(0);
 }
 
 /* Dropdown Layout */
@@ -247,6 +253,18 @@ code-test .results details .result
 ,.hook > .results
 {
     margin-inline-start: 1em;
+}
+
+.result.message:empty
+{
+    padding: .5em 1em;
+}
+.result.message:empty::before
+{
+    content: '[ this function has not been run ]';
+    font-family: monospace;
+    font-size: 12px;
+    font-style: italic;
 }
 
 /* Ordered Display */

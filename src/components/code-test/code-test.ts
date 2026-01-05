@@ -171,32 +171,26 @@ export class CodeTestElement extends HTMLElement
                             <div class="before-each-result-icon result-icon${this.state.beforeEachState.resultCategory != 'none' ? ` ${this.state.beforeEachState.resultCategory}` : ''}" part="before-each-result-icon"></div>
                             <span class="before-each-description description hook-name">Before Each Hook</span>
                         </summary>
-                        <div class="before-each-result result message" part="before-each-result result message">
-                            ${typeof this.state.beforeEachState.resultContent != 'string'
+                        <div class="before-each-result result message" part="before-each-result result message">${typeof this.state.beforeEachState.resultContent != 'string'
                             ? ''
-                            : this.state.beforeEachState.resultContent}
-                        </div>
+                            : this.state.beforeEachState.resultContent}</div>
                     </details>`
                 }
                 ${this.state.testState == null
                 ? ''
                 : (this.state.beforeEachState == null && this.state.afterEachState == null)
-                ? `<div class="test-result result message" part="test-result result message">
-                        ${typeof this.state.testState.resultContent != 'string'
+                ? `<div class="test-result result message" part="test-result result message">${typeof this.state.testState.resultContent != 'string'
                         ? ''
-                        : this.state.testState.resultContent}
-                    </div>`
+                        : this.state.testState.resultContent}</div>`
                 : `<details class="processing-details${this.state.testState.resultCategory == 'none' ? '' : ` ${this.state.testState.resultCategory}`}${this.state.testState.isRunning == true ? ' running' : ''}" part="processing-details"${this.state.testState.hasRun == true ? ' open' : ''}>
                         <summary class="processing-summary" part="processing-summary">
                             <svg class="icon arrow-icon"><use href="#icon-definition_arrow"></use></svg>
                             <div class="processing-result-icon result-icon${this.state.testState.resultCategory != 'none' ? ` ${this.state.testState.resultCategory}` : ''}" part="processing-result-icon result-icon"></div>
                             <span class="processing-description description">Test</span>
                         </summary>
-                        <div class="test-result result message" part="test-result result message">
-                            ${typeof this.state.testState.resultContent != 'string'
+                        <div class="test-result result message" part="test-result result message">${typeof this.state.testState.resultContent != 'string'
                             ? ''
-                            : this.state.testState.resultContent}
-                        </div>
+                            : this.state.testState.resultContent}</div>
                     </details>`
                 }                
                 ${this.state.afterEachState == null
@@ -207,11 +201,9 @@ export class CodeTestElement extends HTMLElement
                             <div class="after-each-result-icon result-icon${this.state.afterEachState.resultCategory != 'none' ? ` ${this.state.afterEachState.resultCategory}` : ''}" part="before-each-result-icon"></div>
                             <span class="after-each-description description hook-name">After Each Hook</span>
                         </summary>
-                        <div class="after-each-result result message" part="after-each-result result message">
-                            ${typeof this.state.afterEachState.resultContent != 'string'
+                        <div class="after-each-result result message" part="after-each-result result message">${typeof this.state.afterEachState.resultContent != 'string'
                             ? ''
-                            : this.state.afterEachState.resultContent}
-                        </div>
+                            : this.state.afterEachState.resultContent}</div>
                     </details>`
                 }
             </div>
@@ -320,9 +312,11 @@ export class CodeTestElement extends HTMLElement
 
         this.setTestStateProperties('testState', testState);
 
-        this.setStateProperties({
-            testState
-        });
+        // this.setStateProperties({
+        //     testState,
+        //     beforeEachState,
+        //     afterEachState,
+        // });
     }
     
     // static observedAttributes = [ "myprop" ];

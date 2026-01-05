@@ -179,14 +179,14 @@ export class ContextManager
     {
         if(test == null) { return; }
 
-        if(inLoop == false)
-        {
-            this.resetHook('requiredBeforeAnyState');
-            this.resetHook('requiredAfterAnyState');
+        // if(inLoop == false)
+        // {
+        //     this.resetHook('requiredBeforeAnyState');
+        //     this.resetHook('requiredAfterAnyState');
 
-            this.resetHook('beforeEachState');
-            this.resetHook('afterEachState');
-        }
+        //     this.resetHook('beforeEachState');
+        //     this.resetHook('afterEachState');
+        // }
 
         if(inLoop == false)
         { 
@@ -226,15 +226,15 @@ export class ContextManager
         // figure out how to cancel
         // add test context
         // onContext, onReset hooks
-        // user reset after fail
         // reload tests
         // prompt
         // expect
         // footer report
         // passed/total; failed/total; pass percentage; execution time;
         // hook icon
-        // cancel icon
         // handle has-hook classes in render
+        // empty content
+        // disable test run button while running
         
 
         let hookResult: TestResultType;

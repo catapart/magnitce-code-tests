@@ -24,7 +24,9 @@
                 <span id="required-before-any-result-icon" class="result-icon"></span>
                 <span id="required-before-any-description" class="description hook-name">Required Before Any Hook</span>
             </summary>
-            <div id="required-before-any-results" class="results"></div>
+            <div class="results">
+                <div id="required-before-any-results" class="result message"></div>
+            </div>
         </details>
         <details id="before-all-details" class="hook">
             <summary id="before-all-summary">
@@ -32,7 +34,9 @@
                 <span id="before-all-result-icon" class="result-icon"></span>
                 <span id="before-all-description" class="description hook-name">Before All Hook</span>
             </summary>
-            <div id="before-all-results" class="results"></div>
+            <div class="results">
+                <div id="before-all-results" class="result message"></div>
+            </div>
         </details>
         <div id="tests"></div>
         <details id="after-all-details" class="hook">
@@ -41,7 +45,9 @@
                 <span id="after-all-result-icon" class="result-icon"></span>
                 <span id="after-all-description" class="description hook-name">After All Hook</span>
             </summary>
-            <div id="after-all-results" class="results"></div>
+            <div class="results">
+                <div id="after-all-results" class="result message"></div>
+            </div>
         </details>
         <details id="required-after-any-details" class="hook">
             <summary id="required-after-any-summary">
@@ -49,12 +55,25 @@
                 <span id="required-after-any-result-icon" class="result-icon"></span>
                 <span id="required-after-any-description" class="description hook-name">Required After Any Hook</span>
             </summary>
-            <div id="required-after-any-results" class="results"></div>
+            <div class="results">
+                <div id="required-after-any-results" class="result message"></div>
+            </div>
         </details>
     </div>
 </details>
 <div id="icon-definitions" style="display: none;">
     <svg id="icon-definition_arrow" viewBox="0 0 8 8" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
         <path d="m3.26,6.81l-2.93,-4.69c-0.37,-0.58 0.05,-1.34 0.74,-1.34l5.87,0c0.69,0 1.11,0.76 0.74,1.34l-2.93,4.69c-0.35,0.55 -1.14,0.55 -1.49,0z" fill="var(--fill-color, currentcolor)" />
+    </svg>
+    <svg id="icon-definition_reset" class="icon reset" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+        <path
+            style="fill:var(--fill-color, currentcolor);stroke-linecap:round;stroke-linejoin:round;-inkscape-stroke:none;paint-order:markers stroke fill"
+            d="M 5.484375 0.43359375 A 1.5224222 1.5224222 0 0 0 4.2558594 1.2011719 L 0.99804688 6.9453125 A 1.5224222 1.5224222 0 0 0 2.5488281 9.2011719 L 9.34375 8.171875 A 1.5224222 1.5224222 0 0 0 10.332031 5.7539062 L 9.4746094 4.6113281 C 11.949333 3.8016718 14.718209 4.258351 16.822266 5.9570312 C 19.510764 8.1275534 20.456787 11.785479 19.160156 14.988281 C 17.863527 18.191083 14.6405 20.15873 11.199219 19.847656 C 7.7579362 19.536584 4.9376009 17.022073 4.2363281 13.638672 A 1.5 1.5 0 0 0 2.4628906 12.474609 A 1.5 1.5 0 0 0 1.2988281 14.248047 C 2.2656928 18.912838 6.1831413 22.407052 10.927734 22.835938 C 15.672328 23.264824 20.153706 20.531029 21.941406 16.115234 C 23.729107 11.699441 22.413741 6.6156073 18.707031 3.6230469 C 16.853677 2.1267667 14.61485 1.3255701 12.347656 1.2324219 C 10.738216 1.1662975 9.1150542 1.4598646 7.6035156 2.1132812 L 6.7988281 1.0390625 A 1.5224222 1.5224222 0 0 0 5.484375 0.43359375 z " />
+    </svg>
+    <svg id="icon-definition_cancel" class="icon cancel" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+    <path
+        style="fill:var(--fill-color, currentcolor);stroke-linecap:round;stroke-linejoin:round;-inkscape-stroke:none;paint-order:markers stroke fill"
+        d="M -7.063234 9.5244002 C -5.8135728 7.6769245 -5.0820528 5.453265 -5.0820528 3.0633809 C -5.0820529 -3.3096433 -10.278145 -8.5098163 -16.65117 -8.5098163 C -23.024193 -8.5098163 -28.22385 -3.3110105 -28.22385 3.0620137 C -28.22385 9.4350379 -23.025043 14.634694 -16.65202 14.634694 C -12.668879 14.634694 -9.1460028 12.603526 -7.063234 9.5244002 z M -9.5406311 7.8637601 C -11.076991 10.143147 -13.683157 11.63463 -16.652974 11.63463 C -19.960499 11.63463 -22.814085 9.782061 -24.244824 7.0543029 L -24.236684 7.0527515 L -8.1332524 3.983715 L -8.1305391 3.9831979 C -8.2815631 5.4121635 -8.7798709 6.7350751 -9.5406311 7.8637601 z M -9.0610781 -0.92890828 L -9.069218 -0.92735695 L -25.17265 2.1416796 L -25.175363 2.1421967 C -24.719122 -2.1725739 -21.093311 -5.5092358 -16.652928 -5.5092358 C -13.345403 -5.5092358 -10.491243 -3.6566663 -9.0610781 -0.92890828 z "
+        transform="rotate(-124.20981)" />
     </svg>
 </div>

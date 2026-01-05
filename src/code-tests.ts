@@ -4,7 +4,8 @@ import { CodeTests, expect, prompt  } from './api';
 import { assignClassAndIdToPart } from 'ce-part-utils';
 
 import { ContextManager } from './managers/context.manager';
-import { CodeTestElement, type TestState } from './components/code-test/code-test';
+import { CodeTestElement, type TestResultState, type TestState } from './components/code-test/code-test';
+import { CodeTestEvent } from './maps/code-test-event';
 
 export type CodeTestsState = 
 {
@@ -191,7 +192,18 @@ export class CodeTestsElement extends HTMLElement
         const runAllButton = event.composedPath().find(item => item instanceof HTMLButtonElement && item.id == 'run-all-button') as HTMLButtonElement;
         if(runAllButton != null)
         {
-            this.runTests();
+            if(this.classList.contains('running'))
+            {
+                this.#contextManager.shouldContinueRunningTests = false;
+            }
+            else if(this.classList.contains('fail') || this.classList.contains('success'))
+            {
+                this.reset();
+            }
+            else
+            {
+                this.runTests();
+            }
             return;
         }
 
@@ -274,7 +286,18 @@ export class CodeTestsElement extends HTMLElement
         {
             runAllButtonLabel.textContent = isRunning == true
             ? "Cancel"
+            : (resultCategory == 'fail')
+            ? "Reset"
             : "Run Tests";
+        }
+        const runAllIcon = this.findElement('.run-all-button-icon');
+        if(runAllIcon != null)
+        {
+            runAllIcon.innerHTML = isRunning == true
+            ? '<use href="#icon-definition_cancel"></use>'
+            : (resultCategory == 'fail')
+            ? '<use href="#icon-definition_reset"></use>'
+            : '<use href="#icon-definition_arrow"></use>';
         }
 
         this.#renderHook(this.state.beforeAllState, '#before-all-results');
@@ -324,6 +347,22 @@ export class CodeTestsElement extends HTMLElement
         for(let i = 0; i < tests.length; i++)
         {
             const test = tests[i];
+            const beforeEachState: TestResultState|undefined = (this.state.beforeEachState != null)
+            ? { resultCategory: 'none',
+                resultContent: '',
+                hasRun: this.state.beforeEachState.hasRun,
+                isRunning: this.state.beforeEachState.isRunning
+            }
+            : undefined;
+            const afterEachState: TestResultState|undefined = (this.state.afterEachState != null)
+            ? { resultCategory: 'none',
+                resultContent: '',
+                hasRun: this.state.afterEachState.hasRun,
+                isRunning: this.state.afterEachState.isRunning
+            }
+            : undefined;
+            if(beforeEachState != null) { test.state.beforeEachState = beforeEachState; }
+            if(afterEachState != null) { test.state.afterEachState = afterEachState; }
             test.reset();
         }
 
@@ -356,6 +395,10 @@ export class CodeTestsElement extends HTMLElement
             requiredAfterAnyState,
             requiredBeforeAnyState,
         });
+
+        this.#contextManager.shouldContinueRunningTests = true;
+
+        this.dispatchEvent(new CustomEvent(CodeTestEvent.Reset, { bubbles: true, composed: true }));
     }
 
 
