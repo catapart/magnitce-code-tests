@@ -1,30 +1,40 @@
-import { CodeTestsElement, Hook, type CodeTestsState } from "../code-tests";
-import { CodeTestElement, type TestResultCategory, type TestState } from "../components/code-test/code-test";
-import { NOTESTDEFINED } from "../constants";
-import { CodeTestEvent } from "../maps/code-test-event";
-import type { TestContext } from "../types/test-context.type";
-import type { TestResultType } from "../types/test-result.type";
-import type { Test } from "../types/test.type";
-import { TestManager } from "./test.manager";
+import { CodeTestsElement, Hook, type CodeTestsState } from "./code-tests";
+import { CodeTestElement, type TestResultCategory, type TestState } from "./code-test/code-test";
+import { NOTESTDEFINED } from "./constants";
+import { CodeTestEvent } from "./code-test-event";
+import type { TestContext } from "./types/test-context.type";
+import type { TestResultType } from "./types/test-result.type";
+import type { Test } from "./types/test.type";
+import type { Tests } from "./types/tests.type";
+
+export type Hooks = {
+    [Hook.BeforeAll]?: Test,
+    [Hook.AfterAll]?: Test,
+    [Hook.BeforeEach]?: Test,
+    [Hook.AfterEach]?: Test,
+    [Hook.RequiredBeforeAny]?: Test,
+    [Hook.RequiredAfterAny]?: Test,
+    [Hook.Reset]?: Test,
+    [Hook.Context]?: Test,
+};
 
 export class ContextManager
 {
     codeTestsElement: CodeTestsElement;
 
-    #testManager: TestManager;
-
     constructor(parent: CodeTestsElement)
     {
         this.codeTestsElement = parent;
-        this.#testManager = new TestManager();
     }
+
+    //#region Loading
     async loadTests(path?: string)
     {
         if(path == null) { return; }
         
         try
         {
-            const { tests, hooks } = await this.#testManager.loadTests(path);
+            const { tests, hooks } = await this.#loadTests(path);
 
             console.log(tests, hooks);
 
@@ -94,11 +104,96 @@ export class ContextManager
             // this.#addProcessError("An error occurred while loading the tasks:", error);
         }
     }
+    async #loadTests(path: string)
+    {
+        const module = await this.#loadModule(path);
+        
+        const tests: Tests = module.tests ?? module.default;
+        if(tests == undefined)
+        {
+            throw new Error(`Unable to find tests definition in file at path: ${path}`);
+        }
 
+        const hooks: Hooks = { }
+
+        const beforeAll = tests[Hook.BeforeAll];
+        if(beforeAll != null)
+        {
+            hooks[Hook.BeforeAll] = beforeAll;
+            delete tests[Hook.BeforeAll];
+        }
+        const afterAll = tests[Hook.AfterAll];
+        if(afterAll != null)
+        {
+            hooks[Hook.AfterAll] = afterAll;
+            delete tests[Hook.AfterAll];
+        }
+        const beforeEach = tests[Hook.BeforeEach];
+        if(beforeEach != null)
+        {
+            hooks[Hook.BeforeEach] = beforeEach;
+            delete tests[Hook.BeforeEach];
+        }
+        const afterEach = tests[Hook.AfterEach];
+        if(afterEach != null)
+        {
+            hooks[Hook.AfterEach] = afterEach;
+            delete tests[Hook.AfterEach];
+        }
+        const requiredBeforeAny = tests[Hook.RequiredBeforeAny];
+        if(requiredBeforeAny != null)
+        {
+            hooks[Hook.RequiredBeforeAny] = requiredBeforeAny;
+            delete tests[Hook.RequiredBeforeAny];
+        }
+        const requiredAfterAny = tests[Hook.RequiredAfterAny];
+        if(requiredAfterAny != null)
+        {
+            hooks[Hook.RequiredAfterAny] = requiredAfterAny;
+            delete tests[Hook.RequiredAfterAny];
+        }
+        const resetHook = tests[Hook.Reset];
+        if(resetHook != null)
+        {
+            hooks[Hook.Reset] = resetHook;
+            delete tests[Hook.Reset];
+        }
+        const contextHook = tests[Hook.Context];
+        if(contextHook != null)
+        {
+            hooks[Hook.Context] = contextHook;
+            delete tests[Hook.Context];
+        }
+
+        // this.#tests = new Map(Object.entries(tests));
+
+        // this.#hooks = hooks;
+
+        return { tests, hooks };
+    }
+    async #loadModule(path: string)
+    {
+        const lastSlashIndexInCurrentPath = window.location.href.lastIndexOf('/');
+        const currentPathHasExtension = window.location.href.substring(lastSlashIndexInCurrentPath).indexOf('.') != -1;
+        const currentPath = (currentPathHasExtension == true)
+        ? window.location.href.substring(0, lastSlashIndexInCurrentPath + 1)
+        : window.location.href;
+        const moduleDirectory = currentPath + path.substring(0, path.lastIndexOf('/') + 1);
+        const modulePath = currentPath + path;
+        let moduleContent = await (await fetch(modulePath)).text();
+        moduleContent = moduleContent.replaceAll(/['"`](((\.\/)|(\.\.\/))+(.*))['"`]/g, `'${moduleDirectory}$1'`);
+        // console.log(moduleContent);
+        const moduleFile = new File([moduleContent], path.substring(path.lastIndexOf('/')), { type: 'text/javascript' });
+        const moduleURL = URL.createObjectURL(moduleFile);
+        // const module = await import(`data:text/javascript,${encodeURIComponent(moduleContent)}`);
+        // const module = await (await fetch(moduleURL)).text();
+        const module = await import(/* @vite-ignore */moduleURL);
+        return module;
+    }
     #addTest(description: string, test: Test)
     {
         const testId = generateId();
-        this.#testManager.addTest(testId, test);
+        // this.#testManager.addTest(testId, test);
         const testElement = new CodeTestElement();
         testElement.setStateProperties({
             testId,
@@ -124,7 +219,9 @@ export class ContextManager
         this.codeTestsElement.findElement('#tests').append(testElement);
         return testId;
     }
+    //#endregion Loading
 
+    //#region Running
     shouldContinueRunningTests: boolean = true;
     async runTests(tests: CodeTestElement[])
     {
@@ -222,8 +319,7 @@ export class ContextManager
 
         await this.runHook('afterEachState', test, testContext);
         if(inLoop == false) { await this.runHook('requiredAfterAnyState', undefined, testContext); }
-    }
-    
+    }    
     async runHook(testStateName: keyof Pick<CodeTestsState, 'requiredBeforeAnyState'|'requiredAfterAnyState'|'beforeEachState'|'afterEachState'|'beforeAllState'|'afterAllState'>, 
         test: CodeTestElement|undefined,
         testContext: TestContext)
@@ -304,7 +400,9 @@ export class ContextManager
             return hookResult;
         }
     }
+    //#endregion Running
 
+    //#region Utils
     parseTestResult(result: TestResultType|typeof NOTESTDEFINED, finishedTest: boolean, error?: Error)
     : { result: string|HTMLElement, resultCategory: TestResultCategory }
     {
@@ -390,11 +488,7 @@ export class ContextManager
         this.codeTestsElement.dispatchEvent(new CustomEvent(CodeTestEvent.Context, { bubbles: true, composed: true, detail: { context } }));
         return context;
     }
-
-    // resetHook(hookName: keyof Pick<CodeTestsState, 'requiredBeforeAnyState'|'requiredAfterAnyState'|'beforeEachState'|'afterEachState'|'beforeAllState'|'afterAllState'>)
-    // {
-    //     this.codeTestsElement.setTestStateProperties(hookName, { resultContent: '', resultCategory: 'none', hasRun: false });
-    // }
+    //#endregion Utils
 }
 
 /**

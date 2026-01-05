@@ -3,19 +3,14 @@ import { default as html } from './code-tests.html?raw';
 import { CodeTests, expect, prompt  } from './api';
 import { assignClassAndIdToPart } from 'ce-part-utils';
 
-import { ContextManager } from './managers/context.manager';
-import { CodeTestElement, type TestResultState, type TestState } from './components/code-test/code-test';
-import { CodeTestEvent } from './maps/code-test-event';
+import { ContextManager } from './context.manager';
+import { CodeTestElement, type TestResultState, type TestState } from './code-test/code-test';
+import { CodeTestEvent } from './code-test-event';
 import type { Test } from './types/test.type';
 
 export type CodeTestsState = 
 {
-    // isOpen: boolean;
-    // isRunning: boolean;
     isCanceled: boolean;
-    // groupResultType: 'none'|'success'|'fail';
-
-    // hasRun: boolean,
     
     beforeAllState?: TestState,
     afterAllState?: TestState,
@@ -50,12 +45,8 @@ export class CodeTestsElement extends HTMLElement
 {
     state: CodeTestsState = 
     { 
-        // isOpen: false,
-        // isRunning: false,
         isCanceled: false,
-        // groupResultType: 'none',
-
-        // hasRun: false,
+        
         beforeAllState: undefined,
         afterAllState: undefined,
         beforeEachState: undefined,
@@ -217,44 +208,7 @@ export class CodeTestsElement extends HTMLElement
 
         const test = runButton.closest<CodeTestElement>('code-test') ?? undefined;
         this.#contextManager.runTest(test, false);
-
-        // if(parentListItem == null)
-        // {
-
-        //     const isRunAll = runButton.hasAttribute('data-all');
-        //     if(isRunAll == true)
-        //     { 
-        //         if(this.classList.contains('running'))
-        //         {
-        //             if(this.classList.contains('canceled')) { return; }
-        //             this.cancel();
-        //         }
-        //         else
-        //         {
-        //             this.runTests();
-        //         }
-        //     }
-        //     return;
-        // }
-
-        // const testId = parentListItem.dataset.testId;
-        // if(testId == null) { return; }
-        // const test = this.#tests.get(testId);
-        // if(test == null) { return; }
-        
-        // this.isCanceled = false;
-        // this.classList.remove('canceled');
-        // this.part.remove('canceled');
-        // this.#runTest(testId, test);
     }
-    // #boundDetailsToggleHandler: (event: Event) => void = this.#componentDetails_onToggle.bind(this);
-    // #componentDetails_onToggle(event: Event)
-    // {
-    //     event.preventDefault();
-    //     event.stopPropagation();
-    //     return false;
-    //     // this.setStateProperties({ isOpen: false })
-    // }
 
     #getCurrentTestsPath()
     {
@@ -274,8 +228,6 @@ export class CodeTestsElement extends HTMLElement
         this.classList.toggle('canceled', this.state.isCanceled);
         this.part.toggle('canceled', this.state.isCanceled);
 
-        // const componentDetails = this.findElement('#component-details');
-        // componentDetails.toggleAttribute('open', this.state.isOpen);
         this.classList.toggle('running', isRunning == true);
         this.part.toggle('running', isRunning == true);
         this.toggleAttribute('success', resultCategory == 'success');
@@ -283,8 +235,6 @@ export class CodeTestsElement extends HTMLElement
         this.part.toggle('success', resultCategory == 'success');
         this.classList.toggle('fail', resultCategory == 'fail');
         this.part.toggle('fail', resultCategory == 'fail');
-        
-        // this.toggleAttribute('success', this.state.groupResultType == 'success');
 
         const runAllButtonLabel = this.findElement('.run-all-button-label');
         if(runAllButtonLabel != null)

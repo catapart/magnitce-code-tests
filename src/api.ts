@@ -1,56 +1,56 @@
 import { CodeTestsElement } from "./code-tests";
 
-export abstract class TestResultComparers
-{
-    static async toBeDefined(valueName?: string)
-    {
-        // convert to parameter
-        // move to promise class
-        const target = await this;
+// export abstract class TestResultComparers
+// {
+//     static async toBeDefined(valueName?: string)
+//     {
+//         // convert to parameter
+//         // move to promise class
+//         const target = await this;
 
-        if(target == undefined)
-        {
-            throw new Error(`${(valueName != null) ? valueName : 'Value'} is undefined`);
-        }
-    }
-    static async toBe(value: any, exact: boolean = false)
-    {
-        const target = await this;
+//         if(target == undefined)
+//         {
+//             throw new Error(`${(valueName != null) ? valueName : 'Value'} is undefined`);
+//         }
+//     }
+//     static async toBe(value: any, exact: boolean = false)
+//     {
+//         const target = await this;
 
-        const result = (exact == true)
-        ? target === value
-        : target == value;
+//         const result = (exact == true)
+//         ? target === value
+//         : target == value;
 
-        if(result == false)
-        {
-            throw new Error(`  Value is not equal.\n  Expected: ${value}\n  Result: ${target}`);
-        }
-    }
-    static async toContainText(_value: string)
-    {
-        // const _target = await this;
+//         if(result == false)
+//         {
+//             throw new Error(`  Value is not equal.\n  Expected: ${value}\n  Result: ${target}`);
+//         }
+//     }
+//     static async toContainText(_value: string)
+//     {
+//         // const _target = await this;
 
-    }
-    static async toHaveAttribute(value: string)
-    {
-        const target = await this;
+//     }
+//     static async toHaveAttribute(value: string)
+//     {
+//         const target = await this;
 
-        if(!(target instanceof HTMLElement))
-        {
-            throw new Error("Unable to check for attribute on non-HTMLElement target");
-        }
+//         if(!(target instanceof HTMLElement))
+//         {
+//             throw new Error("Unable to check for attribute on non-HTMLElement target");
+//         }
         
-        if(target.getAttribute(value))
-        {
-            throw new Error("Taret does not have attribute");
-        }
-    }
-}
+//         if(target.getAttribute(value))
+//         {
+//             throw new Error("Taret does not have attribute");
+//         }
+//     }
+// }
 
-export class ExpectedValue
-{
-    toBeDefined(valueName?: string) { return TestResultComparers.toBeDefined(valueName); }
-}
+// export class ExpectedValue
+// {
+//     toBeDefined(valueName?: string) { return TestResultComparers.toBeDefined(valueName); }
+// }
 
 export class TestPromise<T> extends Promise<T>
 {

@@ -1,10 +1,10 @@
-import type { CodeTestsElement } from '../../code-tests';
-import { NOTESTDEFINED } from '../../constants';
-import type { ContextManager } from '../../managers/context.manager';
-import { CodeTestEvent } from '../../maps/code-test-event';
-import type { TestContext } from '../../types/test-context.type';
-import type { TestResultType } from '../../types/test-result.type';
-import type { Test } from '../../types/test.type';
+import type { CodeTestsElement } from '../code-tests';
+import { NOTESTDEFINED } from '../constants';
+import type { ContextManager } from '../context.manager';
+import { CodeTestEvent } from '../code-test-event';
+import type { TestContext } from '../types/test-context.type';
+import type { TestResultType } from '../types/test-result.type';
+import type { Test } from '../types/test.type';
 import { default as style } from './code-test.css?raw';
 
 export type CodeTestState = {
