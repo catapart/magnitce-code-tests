@@ -11,6 +11,8 @@ export type CodeTestState = {
     testId: string;
     description: string;
 
+    isDisabled: boolean;
+
     testState?: TestState,
     beforeEachState?: TestResultState,
     afterEachState?: TestResultState,
@@ -23,6 +25,7 @@ export type TestResultState = {
     isRunning: boolean,
     resultCategory: TestResultCategory,
     resultContent: string|HTMLElement,
+    duration: number,
 };
 export type TestState = TestResultState & {
     test: Test
@@ -38,6 +41,8 @@ export class CodeTestElement extends HTMLElement
     { 
         testId: '',
         description: 'none',
+
+        isDisabled: false,
 
         testState: undefined,
         beforeEachState: undefined,
@@ -69,8 +74,8 @@ export class CodeTestElement extends HTMLElement
         });
     }
 
-    findElement<T extends HTMLElement = HTMLElement>(query: string) { return this.shadowRoot!.querySelector(query) as T; }
-    findElements<T extends HTMLElement = HTMLElement>(query: string) { return Array.from<T>(this.shadowRoot!.querySelectorAll(query)); }
+    findElement<T extends HTMLElement = HTMLElement>(query: string) { return this.querySelector(query) as T; }
+    findElements<T extends HTMLElement = HTMLElement>(query: string) { return Array.from<T>(this.querySelectorAll(query)); }
 
     isRunning()
     {
@@ -156,7 +161,13 @@ export class CodeTestElement extends HTMLElement
                 <svg class="icon arrow-icon"><use href="#icon-definition_arrow"></use></svg>
                 <div class="result-icon test-result-icon${this.state.testState?.resultCategory != 'none' ? ` ${this.state.testState?.resultCategory}` : ''}" part="result-icon"></div>
                 <span class="test-description description">${this.state.description}</span>
-                <button type="button" class="run-test-button" part="run-test-button" title="Run Test">
+                ${this.state.testState?.duration != null && this.state.testState.duration > 0
+                ? `<span class="test-duration duration">
+                        <span class="test-duration-value">${this.state.testState.duration > 10 ? this.state.testState.duration.toFixed(0) : this.state.testState.duration.toFixed(2)}</span>
+                        <span class="test-duration-unit">ms</span>
+                    </span>`
+                : ''}
+                <button type="button" class="run-test-button" part="run-test-button" title="Run Test"${(this.state.isDisabled == true ? ' disabled' : '')}>
                     <slot name="run-button-content">
                         <slot name="run-button-icon"><svg class="icon arrow-icon run-button-icon"><use href="#icon-definition_arrow"></use></svg></slot>
                         <slot name="run-button-label"><span class="run-button-label button-label label icon">Run Test</span></slot>
@@ -242,6 +253,17 @@ export class CodeTestElement extends HTMLElement
         // }
     }
 
+    enable()
+    {
+        this.state.isDisabled = false;
+        this.findElement('.run-test-button').toggleAttribute('disabled', false);
+    }
+    disable()
+    {
+        this.state.isDisabled = true;
+        this.findElement('.run-test-button').toggleAttribute('disabled', true);
+    }
+
     async runTest(contextManager: ContextManager, testContext: TestContext)
     {
         if(this.state.testState?.test == null) { return; }
@@ -250,6 +272,7 @@ export class CodeTestElement extends HTMLElement
 
         let testResult;
         let stateProperties: Partial<CodeTestState> = {};
+        let duration = 0;
         try
         {
             if(contextManager.shouldContinueRunningTests == false) { throw new Error("Tests have been disabled from continuing to run."); }
@@ -257,9 +280,17 @@ export class CodeTestElement extends HTMLElement
             const allowTest = this.dispatchEvent(new CustomEvent(CodeTestEvent.BeforeTest, { bubbles: true, cancelable: true, composed: true, detail: { testElement: this } }));
             if(allowTest == false) { throw new Error("Test has been prevented."); }
 
+            if(testContext.codeTestsElement.state.isCanceled == true)
+            {
+                throw new Error("Testing has been canceled.");
+            }
+
             this.setTestStateProperties('testState', { isRunning: true });
             contextManager.codeTestsElement.setState(contextManager.codeTestsElement.state); // render hack so that codeTestsElement.isRunning() has up-to-date information
-            testResult = await this.state.testState.test(contextManager.codeTestsElement, this, testContext);
+            const startTime = (performance?.now() ?? Date.now());
+            testResult = await this.state.testState.test(testContext);
+            const endTime = (performance?.now() ?? Date.now());
+            duration = endTime - startTime;
             this.setTestStateProperties('testState', { isRunning: false, hasRun: true });
             contextManager.codeTestsElement.setState(contextManager.codeTestsElement.state); // render hack so that codeTestsElement.isRunning() has up-to-date information
             const testParsedResult = contextManager.parseTestResult(testResult, true);
@@ -271,6 +302,7 @@ export class CodeTestElement extends HTMLElement
                     resultCategory: testParsedResult.resultCategory,
                     hasRun: this.state.testState.hasRun,
                     isRunning: false,
+                    duration,
                 }
             };
         }
@@ -285,6 +317,7 @@ export class CodeTestElement extends HTMLElement
                     resultCategory: errorParsedResult.resultCategory,
                     hasRun: this.state.testState.hasRun,
                     isRunning: false,
+                    duration,
                 }
             };
             console.error(error);
@@ -305,7 +338,8 @@ export class CodeTestElement extends HTMLElement
             resultContent: '',
             test: this.state.testState.test,
             hasRun: this.state.testState.hasRun,
-            isRunning: this.state.testState.isRunning
+            isRunning: this.state.testState.isRunning,
+            duration: 0,
         }
         : undefined;
 

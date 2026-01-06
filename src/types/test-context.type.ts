@@ -1,5 +1,10 @@
+import type { CodeTestElement } from "../code-test/code-test"
+import type { CodeTestsElement } from "../code-tests"
+
 export type TestContext =
 {
-    isCanceled: boolean,
+    codeTestsElement: CodeTestsElement,
+    testElement?: CodeTestElement,
+    messageElement?: HTMLElement,
     detail: any,
 }

@@ -7,6 +7,7 @@ import { ContextManager } from './context.manager';
 import { CodeTestElement, type TestResultState, type TestState } from './code-test/code-test';
 import { CodeTestEvent } from './code-test-event';
 import type { Test } from './types/test.type';
+import type { GroupTestResults } from './types/test-result.type';
 
 export type CodeTestsState = 
 {
@@ -168,8 +169,7 @@ export class CodeTestsElement extends HTMLElement
         this.#isInitialized = true;
 
         if(this.getAttribute('auto') == 'false') { return; }
-        const testsPath = this.#getCurrentTestsPath();
-        this.#contextManager.loadTests(testsPath);
+        this.reloadTests();
     }
     async #initHandlers()
     {
@@ -190,7 +190,7 @@ export class CodeTestsElement extends HTMLElement
         {
             if(this.classList.contains('running'))
             {
-                this.#contextManager.shouldContinueRunningTests = false;
+                this.cancel();
             }
             else if(this.classList.contains('fail') || this.classList.contains('success'))
             {
@@ -201,6 +201,12 @@ export class CodeTestsElement extends HTMLElement
                 this.runTests();
             }
             return;
+        }
+
+        const reloadButton = event.composedPath().find(item => item instanceof HTMLButtonElement && item.id =='reload-button') as HTMLButtonElement;
+        if(reloadButton != null)
+        {
+            this.reloadTests();
         }
 
         const runButton = event.composedPath().find(item => item instanceof HTMLButtonElement && item.classList.contains('run-test-button')) as HTMLButtonElement;
@@ -224,6 +230,17 @@ export class CodeTestsElement extends HTMLElement
     {
         const isRunning = this.getIsRunning();
         const resultCategory = this.getResultCategory();
+        
+        const hasBeforeAllState = this.state.beforeAllState != null;
+        const hasBeforeEachState = this.state.beforeEachState != null;
+        const hasRequiredBeforeAnyState = this.state.requiredAfterAnyState != null;
+
+        const hasAfterAllState = this.state.beforeAllState != null;
+        const hasAfterEachState = this.state.beforeEachState != null;
+        const hasRequiredAfterAnyState = this.state.requiredAfterAnyState != null;
+
+        const hasBeforeHook = hasRequiredBeforeAnyState == true || hasBeforeAllState == true || hasBeforeEachState == true;
+        const hasAfterHook = hasRequiredAfterAnyState == true || hasAfterAllState == true || hasAfterEachState == true;
 
         this.classList.toggle('canceled', this.state.isCanceled);
         this.part.toggle('canceled', this.state.isCanceled);
@@ -236,6 +253,29 @@ export class CodeTestsElement extends HTMLElement
         this.classList.toggle('fail', resultCategory == 'fail');
         this.part.toggle('fail', resultCategory == 'fail');
 
+        this.classList.toggle('has-before-hook', hasBeforeHook);
+        this.part.toggle('has-before-hook', hasBeforeHook);
+        this.classList.toggle('has-after-hook', hasAfterHook);
+        this.part.toggle('has-after-hook', hasAfterHook);
+
+        this.classList.toggle('has-before-all-hook', hasBeforeAllState);
+        this.part.toggle('has-before-all-hook', hasBeforeAllState);
+
+        this.classList.toggle('has-after-all-hook', hasAfterAllState);
+        this.part.toggle('has-after-all-hook', hasAfterAllState);
+
+        this.classList.toggle('has-before-each-hook', hasBeforeEachState);
+        this.part.toggle('has-before-each-hook', hasBeforeEachState);
+
+        this.classList.toggle('has-after-each-hook', hasAfterEachState);
+        this.part.toggle('has-after-each-hook', hasAfterEachState);
+
+        this.classList.toggle('has-required-before-hook', hasRequiredBeforeAnyState);
+        this.part.toggle('has-required-before-hook', hasRequiredBeforeAnyState);
+
+        this.classList.toggle('has-required-after-hook', hasRequiredAfterAnyState);
+        this.part.toggle('has-required-after-hook', hasRequiredAfterAnyState);
+
         const runAllButtonLabel = this.findElement('.run-all-button-label');
         if(runAllButtonLabel != null)
         {
@@ -244,6 +284,11 @@ export class CodeTestsElement extends HTMLElement
             : (resultCategory == 'fail')
             ? "Reset"
             : "Run Tests";
+            runAllButtonLabel.title = isRunning == true
+            ? "Cancel the testing"
+            : (resultCategory == 'fail')
+            ? "Reset the tests so they can be run again"
+            : "Run the tests";
         }
         const runAllIcon = this.findElement('.run-all-button-icon');
         if(runAllIcon != null)
@@ -260,11 +305,13 @@ export class CodeTestsElement extends HTMLElement
         this.#renderHook(this.state.requiredBeforeAnyState, '#required-before-any-results');
         this.#renderHook(this.state.requiredAfterAnyState, '#required-after-any-results');
 
-        //todo: convert to toggles; start from contextManager.loadTests
-        // this.classList.remove('has-before-hook', 'has-before-all-hook', 'has-before-each-hook', 'has-required-before-hook');
-        // this.part.remove('has-before-hook', 'has-before-all-hook', 'has-before-each-hook', 'has-required-before-hook');
-        // this.classList.remove('has-after-hook', 'has-after-all-hook', 'has-after-each-hook', 'has-required-after-hook');
-        // this.part.remove('has-after-hook', 'has-after-all-hook', 'has-after-each-hook', 'has-required-after-hook');
+        const title = this.findElement('#title');
+        if(title != null)
+        {
+            title.textContent = this.getAttribute('label') ?? 'Tests';
+        }
+
+        this.#renderGroupResults();
     }
     #renderHook(hookState: TestState|undefined, elementSelector: string)
     {
@@ -289,11 +336,71 @@ export class CodeTestsElement extends HTMLElement
         detailsElement.classList.toggle('fail', hookState?.resultCategory == 'fail');
         detailsElement.part.toggle('fail', hookState?.resultCategory == 'fail');
     }
+    #renderGroupResults()
+    {
+        const results = this.collectTestResults();
+
+        const progress = this.findElement<HTMLProgressElement>('#results-progress-value');
+        if(progress != null)
+        {
+            progress.max = results.totalTests;
+            progress.value = results.totalPassed;
+        }
+        const totalPassedElement = this.findElement('#total-tests-passed-value');
+        if(totalPassedElement != null)
+        {
+            totalPassedElement.textContent = results.totalPassed.toString();
+        }
+        const totalTestsElement = this.findElement('#total-tests-count-value');
+        if(totalTestsElement != null)
+        {
+            totalTestsElement.textContent = results.totalTests.toString();
+        }
+        const totalPercentElement = this.findElement('#passed-total-percent-value');
+        if(totalPercentElement != null)
+        {
+            totalPercentElement.textContent = results.totalPercentage.toFixed(1);
+        }
+        const durationElement = this.findElement('#duration-value');
+        if(durationElement != null)
+        {
+            durationElement.textContent = results.duration > 10 ? results.duration.toFixed(0) : results.duration.toFixed(2);
+        }
+    }
+
+    collectTestResults()
+    {
+        const tests = this.findElements<CodeTestElement>('code-test');
+        const totalTests = tests.length;
+        const totalPassed = tests.filter(item => item.state.testState?.resultCategory == 'success').length;
+        const totalPercentage = (totalTests == 0) ? 0 : (totalPassed/totalTests) * 100;
+        const duration = tests.reduce((result, item, index) =>
+        {
+            return result + (item.state.testState?.duration ?? 0);
+        }, 0);
+        
+        const results: GroupTestResults = {
+            totalTests,
+            totalPassed,
+            totalPercentage,
+            duration,
+        }
+
+        return results;
+    }
 
     async runTests()
     {
         const tests = this.findElements<CodeTestElement>('code-test');
         return this.#contextManager.runTests(tests);
+    }
+
+    async reloadTests()
+    {
+        this.findElement('#tests').innerHTML = '';
+        await this.reset();
+        const testsPath = this.#getCurrentTestsPath();
+        this.#contextManager.loadTests(testsPath);
     }
 
     async reset()
@@ -306,14 +413,16 @@ export class CodeTestsElement extends HTMLElement
             ? { resultCategory: 'none',
                 resultContent: '',
                 hasRun: this.state.beforeEachState.hasRun,
-                isRunning: this.state.beforeEachState.isRunning
+                isRunning: this.state.beforeEachState.isRunning,
+                duration: 0
             }
             : undefined;
             const afterEachState: TestResultState|undefined = (this.state.afterEachState != null)
             ? { resultCategory: 'none',
                 resultContent: '',
                 hasRun: this.state.afterEachState.hasRun,
-                isRunning: this.state.afterEachState.isRunning
+                isRunning: this.state.afterEachState.isRunning,
+                duration: 0
             }
             : undefined;
             if(beforeEachState != null) { test.state.beforeEachState = beforeEachState; }
@@ -323,22 +432,22 @@ export class CodeTestsElement extends HTMLElement
 
         const beforeAllState: TestState|undefined = (this.state.beforeAllState == undefined)
         ? undefined
-        : { resultContent: '', resultCategory: 'none', test: this.state.beforeAllState.test, isRunning: false, hasRun: false };
+        : { resultContent: '', resultCategory: 'none', test: this.state.beforeAllState.test, isRunning: false, hasRun: false, duration: 0 };
         const afterAllState: TestState|undefined = (this.state.afterAllState == undefined)
         ? undefined
-        : { resultContent: '', resultCategory: 'none', test: this.state.afterAllState.test, isRunning: false, hasRun: false };
+        : { resultContent: '', resultCategory: 'none', test: this.state.afterAllState.test, isRunning: false, hasRun: false, duration: 0 };
         const beforeEachState: TestState|undefined = (this.state.beforeEachState == undefined)
         ? undefined
-        : { resultContent: '', resultCategory: 'none', test: this.state.beforeEachState.test, isRunning: false, hasRun: false };
+        : { resultContent: '', resultCategory: 'none', test: this.state.beforeEachState.test, isRunning: false, hasRun: false, duration: 0 };
         const afterEachState: TestState|undefined = (this.state.afterEachState == undefined)
         ? undefined
-        : { resultContent: '', resultCategory: 'none', test: this.state.afterEachState.test, isRunning: false, hasRun: false };
+        : { resultContent: '', resultCategory: 'none', test: this.state.afterEachState.test, isRunning: false, hasRun: false, duration: 0 };
         const requiredBeforeAnyState: TestState|undefined = (this.state.requiredBeforeAnyState == undefined)
         ? undefined
-        : { resultContent: '', resultCategory: 'none', test: this.state.requiredBeforeAnyState.test, isRunning: false, hasRun: false };
+        : { resultContent: '', resultCategory: 'none', test: this.state.requiredBeforeAnyState.test, isRunning: false, hasRun: false, duration: 0 };
         const requiredAfterAnyState: TestState|undefined = (this.state.requiredAfterAnyState == undefined)
         ? undefined
-        : { resultContent: '', resultCategory: 'none', test: this.state.requiredAfterAnyState.test, isRunning: false, hasRun: false };
+        : { resultContent: '', resultCategory: 'none', test: this.state.requiredAfterAnyState.test, isRunning: false, hasRun: false, duration: 0 };
 
         this.setStateProperties({
             isCanceled: false,
@@ -355,30 +464,36 @@ export class CodeTestsElement extends HTMLElement
 
         if(this.state.resetHook != null)
         {
-            await this.state.resetHook(this, this, { isCanceled: false, detail: {} });
+            await this.state.resetHook(await this.#contextManager.createTestContext());
         }
 
         this.dispatchEvent(new CustomEvent(CodeTestEvent.Reset, { bubbles: true, composed: true }));
     }
 
+    cancel()
+    {
+        this.state.isCanceled = true;
+        this.#contextManager.shouldContinueRunningTests = false;
+        this.classList.add('canceled');
+        this.part.add('canceled');
 
+        this.dispatchEvent(new CustomEvent(CodeTestEvent.Cancel, { bubbles: true, composed: true }));
+    }
 
-    // isCanceled: boolean = false;
-    // cancel()
-    // {
-    //     this.isCanceled = true;
-    //     this.classList.add('canceled');
-    //     this.part.add('canceled');
-
-    //     this.dispatchEvent(new CustomEvent(CodeTestEvent.Cancel, { bubbles: true, composed: true }));
-    // }
-
-    static observedAttributes = ['open'];
+    static observedAttributes = ['open', 'label'];
     attributeChangedCallback(attributeName: string, _oldValue: string, newValue: string)
     {
         if(attributeName == 'open')
         {
             this.findElement('#component-details').toggleAttribute('open', (newValue != undefined));
+        }
+        else if(attributeName == 'label')
+        {
+            const title = this.findElement("#title");
+            if(title != null)
+            {
+                title.textContent = newValue ?? "Tests";
+            }
         }
     }
 }

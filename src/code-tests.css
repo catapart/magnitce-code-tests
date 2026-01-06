@@ -35,6 +35,8 @@
     display: grid;
     gap: var(--gap);
     grid-auto-rows: max-content;
+    font-family: sans-serif;
+    font-size: 12px;
 }
 
 #header
@@ -56,6 +58,22 @@
     display: grid;
     gap: var(--gap);
     grid-auto-rows: max-content;
+}
+
+#header button
+{
+    align-self: stretch;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--gap-small);
+}
+
+button .reset-icon
+{
+    width: 1em;
+    height: 1em;
+    transform: scaleX(-1);
+    margin-inline: 3px;
 }
 
 /* Run button */
@@ -102,8 +120,8 @@ summary > .arrow-icon
     background: var(--arrow-icon);
     transform: rotate(-90deg);
     transition: transform ease-out 90ms;
-    width: .5em;
-    height: .5em;
+    width: .6em;
+    height: .6em;
 }
 details[open] > summary > .arrow-icon
 {
@@ -276,6 +294,10 @@ code-test
 {
     counter-increment: tests;
 }
+code-test > details > summary > .description
+{
+    flex: 1;
+}
 :host(:not([ordered="false"])) code-test > details > summary > .description::before
 {
     content: counter(tests) ". ";
@@ -291,6 +313,27 @@ code-test
     text-transform: uppercase;
     font-size: 11px;
     padding: 3px 7px;
+}
+
+#footer
+{
+    display: flex;
+    justify-content: flex-end;
+}
+#group-results
+{
+    display: flex;
+    gap: var(--gap);
+    padding: var(--gap);
+}
+
+#passed-total-percent::before
+{
+    content: '(';
+}
+#passed-total-percent::after
+{
+    content: ')';
 }
 
 @keyframes spin

@@ -2,21 +2,22 @@ import { Hook } from '../libs/code-tests.js';
 import { expect } from '../libs/code-tests.js';
 
 export default {
-    [Hook.Context]: async (a, b, context) =>
+    [Hook.Context]: async (context) =>
     {
         context.detail.value = 'Init';
-        console.log(context.detail.value);
     },
     [Hook.RequiredBeforeAny]: async () =>
     {
+        // throw new Error("Test");
         await new Promise(resolve => setTimeout(resolve, 1000));
         console.log('this should run once before any other test is run');
     },
-    [Hook.BeforeAll]: async () =>
+    [Hook.BeforeAll]: async (context) =>
     {
         console.log('this should run once before all tests');
         await new Promise(resolve => setTimeout(resolve, 1000));
-        await expect(true).toBe(true);
+        console.log(context.codeTestsElement.state.isCanceled);
+        await expect(context.codeTestsElement.state.isCanceled).toBe(false);
     },
     [Hook.BeforeEach]: async () =>
     {
@@ -37,28 +38,30 @@ export default {
     [Hook.RequiredAfterAny]: async () =>
     {
         await new Promise(resolve => setTimeout(resolve, 1000));
-        throw new Error('error');
+        // throw new Error('error');
         console.log('this should run once after any other test has been run');
     },
-    'should be useful for before-after test': async (a, b, context) =>
+    'should be useful for before-after test': async (context) =>
     {
+        await expect(context.detail.value).toBe("Init");
         await new Promise(resolve => setTimeout(resolve, 1000));
         context.detail.value = "A";
         console.log(context.detail.value);
-        await expect(true).toBe(true);
+        await expect(context.detail.value).toBe("A");
     },
-    'should also be useful for before-after test': async (a, b, context) =>
+    'should also be useful for before-after test': async (context) =>
     {
+        await expect(context.detail.value).toBe("A");
         await new Promise(resolve => setTimeout(resolve, 1000));
         context.detail.value = "B";
         console.log(context.detail.value);
-        await expect(true).toBe(true);
+        await expect(context.detail.value).toBe("B");
     },
-    'should be a third useful test for before-after test': async (a, b, context) =>
+    'should be a third useful test for before-after test': async (context) =>
     {
+        await expect(context.detail.value).toBe("B");
         await new Promise(resolve => setTimeout(resolve, 1000));
         context.detail.value = "C";
-        console.log(context.detail.value);
-        await expect(true).toBe(true);
+        await expect(context.detail.value).toBe("C");
     },
 }

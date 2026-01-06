@@ -5,6 +5,14 @@
             <header id="header">
                 <span id="component-result-icon" class="result-icon"></span>
                 <span id="title"><slot name="title"><span id="title-text">Tests</span></slot></span>
+                <slot name="reload-button">
+                    <button type="button" id="reload-button" title="Reload">
+                        <slot name="reload-button-content">
+                            <slot name="reload-button-icon"><svg class="icon reset-icon reload-button-icon"><use href="#icon-definition_reset"></use></svg></slot>
+                            <slot name="reload-button-label"><span class="reload-button-label button-label label icon">Reload</span></slot>
+                        </slot>
+                    </button>
+                </slot>
                 <slot name="run-all-button">
                     <button type="button" id="run-all-button" title="Run All Tests">
                         <slot name="run-all-button-content">
@@ -60,6 +68,31 @@
             </div>
         </details>
     </div>
+    
+    <slot name="footer">
+        <foooter id="footer">
+            <span id="group-results">
+                <span id="duration">
+                    <span id="duration-label">Duration</span>
+                    <span id="duration-value"></span>
+                    <span id="duration-unit">ms</span>
+                </span>
+                <span id="results-progress">
+                    <progress id="results-progress-value"></progress>
+                </span>
+                <span id="passed-total-pair">
+                    <span id="total-tests-passed-value"></span>
+                    <span id="passed-total-delimiter">of</span>
+                    <span id="total-tests-count-value"></span>
+                    <span id="total-tests-passed-label">Passed</span>
+                </span>
+                <span id="passed-total-percent">
+                    <span id="passed-total-percent-value"></span>
+                    <span id="passed-total-percent-label">%</span>
+                </span>
+            </span>
+        </foooter>
+    </slot>
 </details>
 <div id="icon-definitions" style="display: none;">
     <svg id="icon-definition_arrow" viewBox="0 0 8 8" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
