@@ -1,4 +1,4 @@
-import type { CodeTestElement } from "../code-test/code-test"
+import type { CodeTestElement } from "../code-test"
 import type { CodeTestsElement } from "../code-tests"
 
 export type TestContext =

@@ -1,5 +1,5 @@
 import { CodeTestsElement, Hook, type CodeTestsState } from "./code-tests";
-import { CodeTestElement, type TestResultCategory, type TestState } from "./code-test/code-test";
+import { CodeTestElement, type TestResultCategory, type TestState } from "./code-test";
 import { NOTESTDEFINED } from "./constants";
 import { CodeTestEvent } from "./code-test-event";
 import type { TestContext } from "./types/test-context.type";
@@ -326,12 +326,7 @@ export class ContextManager
         if(this.codeTestsElement.state.isCanceled == true)
         {
             return { success: false, value: "Testing has been canceled." };
-        }
-
-        // todo:
-        // prompt
-        // expect
-        
+        }        
 
         let hookResult: TestResultType;
         try
@@ -414,6 +409,10 @@ export class ContextManager
                 </code>`,
                 resultCategory: (finishedTest == true) ? 'success' : 'fail'
             };
+        }
+        else if(typeof result == 'boolean')
+        {
+            return { result, resultCategory: (result == true) ? 'success' : 'fail' };
         }
         else if(typeof result == 'function')
         {

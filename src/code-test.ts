@@ -1,11 +1,7 @@
-import type { CodeTestsElement } from '../code-tests';
-import { NOTESTDEFINED } from '../constants';
-import type { ContextManager } from '../context.manager';
-import { CodeTestEvent } from '../code-test-event';
-import type { TestContext } from '../types/test-context.type';
-import type { TestResultType } from '../types/test-result.type';
-import type { Test } from '../types/test.type';
-import { default as style } from './code-test.css?raw';
+import type { ContextManager } from './context.manager';
+import { CodeTestEvent } from './code-test-event';
+import type { TestContext } from './types/test-context.type';
+import type { Test } from './types/test.type';
 
 export type CodeTestState = {
     testId: string;
@@ -24,15 +20,13 @@ export type TestResultState = {
     hasRun: boolean;
     isRunning: boolean,
     resultCategory: TestResultCategory,
-    resultContent: string|HTMLElement,
+    resultContent: string|boolean|number|HTMLElement,
     duration: number,
 };
 export type TestState = TestResultState & {
     test: Test
 };
 
-const COMPONENT_STYLESHEET = new CSSStyleSheet();
-COMPONENT_STYLESHEET.replaceSync(`${style}`);
 
 const COMPONENT_TAG_NAME = 'code-test';
 export class CodeTestElement extends HTMLElement
@@ -143,11 +137,6 @@ export class CodeTestElement extends HTMLElement
             return 'none';
         }
     }
-
-    constructor()
-    {
-        super();
-    }
     
     connectedCallback()
     {
@@ -156,6 +145,16 @@ export class CodeTestElement extends HTMLElement
 
     #render()
     {
+        const resultMessage = this.state.testState == null
+        ? ''
+        : typeof this.state.testState.resultContent == 'boolean'
+        ? (this.state.testState.resultContent == true ? `<code class="code" part="code"><pre class="pre success-message" part="pre success-message">Passed</pre></code>` : `<code class="code" part="code"><pre class="pre error-message" part="pre error-message">Failed</pre></code>`)
+        : typeof this.state.testState.resultContent == 'number'
+        ? `<code class="code" part="code"><pre class="pre success-message" part="pre success-message">Passed: ${this.state.testState.resultContent.toString()}</pre></code>`
+        : typeof this.state.testState.resultContent == 'string'
+        ? this.state.testState.resultContent
+        : '';
+
         this.innerHTML = `<details class="test-details" part="test-details" ${this.isRunning() == true || this.hasRun() == true ? ' open' : ''}>
             <summary class="test-summary" part="test-summary">
                 <svg class="icon arrow-icon"><use href="#icon-definition_arrow"></use></svg>
@@ -191,18 +190,14 @@ export class CodeTestElement extends HTMLElement
                 ${this.state.testState == null
                 ? ''
                 : (this.state.beforeEachState == null && this.state.afterEachState == null)
-                ? `<div class="test-result result message" part="test-result result message">${typeof this.state.testState.resultContent != 'string'
-                        ? ''
-                        : this.state.testState.resultContent}</div>`
+                ? `<div class="test-result result message" part="test-result result message">${resultMessage}</div>`
                 : `<details class="processing-details${this.state.testState.resultCategory == 'none' ? '' : ` ${this.state.testState.resultCategory}`}${this.state.testState.isRunning == true ? ' running' : ''}" part="processing-details"${this.state.testState.hasRun == true ? ' open' : ''}>
                         <summary class="processing-summary" part="processing-summary">
                             <svg class="icon arrow-icon"><use href="#icon-definition_arrow"></use></svg>
                             <div class="processing-result-icon result-icon${this.state.testState.resultCategory != 'none' ? ` ${this.state.testState.resultCategory}` : ''}" part="processing-result-icon result-icon"></div>
                             <span class="processing-description description">Test</span>
                         </summary>
-                        <div class="test-result result message" part="test-result result message">${typeof this.state.testState.resultContent != 'string'
-                            ? ''
-                            : this.state.testState.resultContent}</div>
+                        <div class="test-result result message" part="test-result result message">${resultMessage}</div>
                     </details>`
                 }                
                 ${this.state.afterEachState == null
@@ -353,15 +348,20 @@ export class CodeTestElement extends HTMLElement
         //     afterEachState,
         // });
     }
+
+    getMessageElement()
+    {
+        return this.findElement('.test-result');
+    }
     
-    // static observedAttributes = [ "myprop" ];
-    // attributeChangedCallback(attributeName: string, oldValue: string, newValue: string) 
-    // {
-    //     if(attributeName == "myprop")
-    //     {
-            
-    //     }
-    // }
+    static observedAttributes = [ "open" ];
+    attributeChangedCallback(attributeName: string, _oldValue: string, newValue: string) 
+    {
+        if(attributeName == 'open')
+        {
+            this.findElement('.test-details').toggleAttribute('open', (newValue != undefined));
+        }
+    }
     
 }
 if(customElements.get(COMPONENT_TAG_NAME) == null)

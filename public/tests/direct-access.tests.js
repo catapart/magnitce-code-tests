@@ -1,14 +1,13 @@
-import { expect, prompt } from '../libs/code-tests.js';
+import { expect } from '../libs/code-tests.min.js';
 
 export default {
-    'should have access to the console api': async () =>
+    'should have access to the console api': async (context) =>
     {
         console.log("New Wave? Next Wave? Dream Wave? OR Cyberpunk?");
     },
     'should have access to the DOM': async () =>
     {
-        const div = document.querySelector('div');
-        await expect(div).toBeDefined();
+        await expect(document.body).toBeDefined();
     },
     'should have access to canvas api': async () =>
     {

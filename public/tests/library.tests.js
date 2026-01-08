@@ -1,14 +1,6 @@
-import { Library } from "../library.js"
-import { expect } from '../dist/code-tests.js';
+import { Library } from "../libs/library.js"
+import { expect } from '../libs/code-tests.min.js';
 
-// export default {
-//     'should add': async () =>
-//     {
-//         const library = new Library();
-//         const result = library.add(5, 7);
-//         await expect(result).toBe(12);
-//     }
-// }
 export const tests = {
     'should add': async () =>
     {

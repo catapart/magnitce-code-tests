@@ -1,13 +1,13 @@
+
 import { default as style } from './code-tests.css?raw';
 import { default as html } from './code-tests.html?raw';
-import { CodeTests, expect, prompt  } from './api';
-import { assignClassAndIdToPart } from 'ce-part-utils';
-
 import { ContextManager } from './context.manager';
-import { CodeTestElement, type TestResultState, type TestState } from './code-test/code-test';
+import { CodeTestElement, type TestResultState, type TestState } from './code-test';
 import { CodeTestEvent } from './code-test-event';
 import type { Test } from './types/test.type';
 import type { GroupTestResults } from './types/test-result.type';
+import { TestPromise } from './test-promise';
+import { assignClassAndIdToPart } from 'ce-part-utils';
 
 export type CodeTestsState = 
 {
@@ -139,7 +139,7 @@ export class CodeTestsElement extends HTMLElement
         return 'none';
     }
 
-    #contextManager: ContextManager;
+    #contextManager!: ContextManager;
 
     constructor()
     {
@@ -147,7 +147,6 @@ export class CodeTestsElement extends HTMLElement
         this.attachShadow({ mode: "open" });
         this.shadowRoot!.innerHTML = html;
         this.shadowRoot!.adoptedStyleSheets.push(COMPONENT_STYLESHEET);
-        this.#contextManager = new ContextManager(this);
     }
     
     connectedCallback()
@@ -164,18 +163,23 @@ export class CodeTestsElement extends HTMLElement
     {
         if(this.#isInitialized == true) { return; }
 
-        await this.#initHandlers();
+        assignClassAndIdToPart(this.shadowRoot!);
+
+        this.addEventListener('click', this.#boundClickHandler);
+
+        await new Promise<void>(resolve => requestAnimationFrame(() =>
+        {
+            // wait a frame to make sure that the ContextManager class
+            // has been interpreted by the browser
+            // (connectedCallback may fire before the library loads)
+            this.#contextManager = new ContextManager(this);
+            resolve();
+        }));
 
         this.#isInitialized = true;
 
         if(this.getAttribute('auto') == 'false') { return; }
         this.reloadTests();
-    }
-    async #initHandlers()
-    {
-        this.addEventListener('click', this.#boundClickHandler);
-        
-        // this.findElement('#component-details').addEventListener('close', this.#boundDetailsToggleHandler);
     }
     #destroy()
     {
@@ -374,7 +378,7 @@ export class CodeTestsElement extends HTMLElement
         const totalTests = tests.length;
         const totalPassed = tests.filter(item => item.state.testState?.resultCategory == 'success').length;
         const totalPercentage = (totalTests == 0) ? 0 : (totalPassed/totalTests) * 100;
-        const duration = tests.reduce((result, item, index) =>
+        const duration = tests.reduce((result, item, _index) =>
         {
             return result + (item.state.testState?.duration ?? 0);
         }, 0);
@@ -502,9 +506,99 @@ if(customElements.get(COMPONENT_TAG_NAME) == null)
 {
     customElements.define(COMPONENT_TAG_NAME, CodeTestsElement);
 }
-export
-{ 
-    CodeTests,
-    expect,
-    prompt
+
+
+
+
+export function expect<T>(value: T)
+{
+    const promise = new TestPromise<T>(async (resolve, _reject) =>
+    {
+        if(value instanceof Promise)
+        {
+            const result = await value;
+            resolve(result);
+            return;
+        }
+
+        resolve(value);
+    });
+    return promise;
+}
+
+
+export type PromptOptions = {
+    template?: HTMLTemplateElement,
+    acceptLabel?: string,
+    rejectLabel?: string,
+    onAccept?: () => void,
+    onReject?: () => void
 };
+export async function prompt(host: CodeTestElement, parentElement: HTMLElement, message: string, options?: PromptOptions)
+{
+    return new Promise<boolean>((resolve, _reject) =>
+    {
+        const template = options?.template ?? host.querySelector<HTMLTemplateElement>('.prompt-template') ?? host.findElement<HTMLTemplateElement>('#prompt-template');
+        const promptElement = createElementFromTemplate(template);
+        promptElement.querySelector('.label')!.textContent = message;
+
+        
+        const clickHandler = (event: Event) =>
+        {
+            const composedPath = event.composedPath();
+            
+            const acceptButton = composedPath.find(item => item instanceof HTMLButtonElement && item.classList.contains('accept'));
+            if(acceptButton != null)
+            {
+                const result = options?.onAccept?.() ?? true;
+                promptElement.removeEventListener('click', clickHandler);
+                resolve(result);
+                return;
+            }
+            
+            const rejectButton = composedPath.find(item => item instanceof HTMLButtonElement && item.classList.contains('reject'));
+            if(rejectButton != null)
+            {
+                const result = options?.onReject?.() ?? false;
+                promptElement.removeEventListener('click', clickHandler);
+                resolve(result);
+                return;
+            }
+        }
+        promptElement.addEventListener('click', clickHandler);
+
+        if(options?.acceptLabel != null)
+        {
+            promptElement.querySelector('.accept')!.textContent = options.acceptLabel;
+        }
+        if(options?.rejectLabel != null)
+        {
+            promptElement.querySelector('.reject')!.textContent = options.rejectLabel;
+        }
+        
+        parentElement.append(promptElement);
+    });
+}
+export function createElementFromTemplate(target: string|HTMLTemplateElement, parent?: HTMLElement)
+{
+    const templateNode =((target instanceof HTMLTemplateElement) ? target : document.querySelector<HTMLTemplateElement>(target));
+    if(templateNode == null)
+    {
+        throw new Error(`Unable to find template element from selector: ${target}`);
+    }
+    const firstChild = (templateNode.content.cloneNode(true) as HTMLElement).firstElementChild as HTMLElement;
+    if(firstChild == null)
+    {
+        throw new Error(`Unable to find first child of template element`);
+    }
+
+    parent?.append(firstChild);
+
+    return firstChild;
+}
+
+export {
+    CodeTestEvent,
+    CodeTestElement,
+    TestPromise,
+}

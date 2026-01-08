@@ -11,6 +11,7 @@ export default defineConfig({
             entry: ['src/code-tests.ts'],
         },
         minify: false,
+        copyPublicDir: false,
         rollupOptions: {
             external: [
                 '**/*tests.ts',
@@ -44,5 +45,5 @@ export default defineConfig({
             ]
         }
     },
-    plugins: [dts({exclude: "**/*.test.ts"})]
+    plugins: [dts({ exclude: ["**/*.test.ts", 'src/dev'], rollupTypes: true })]
 });

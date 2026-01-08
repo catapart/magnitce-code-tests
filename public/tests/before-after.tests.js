@@ -1,5 +1,4 @@
-import { Hook } from '../libs/code-tests.js';
-import { expect } from '../libs/code-tests.js';
+import { expect, Hook } from '../libs/code-tests.min.js';
 
 export default {
     [Hook.Context]: async (context) =>
