@@ -1,5 +1,11 @@
 # @magnit-ce/code-tests
 
+## 0.0.15
+
+### Patch Changes
+
+- 2980941: updated exports
+
 ## 0.0.14
 
 ### Patch Changes
