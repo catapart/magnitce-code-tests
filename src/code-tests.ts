@@ -2,12 +2,13 @@
 import { default as style } from './code-tests.css?raw';
 import { default as html } from './code-tests.html?raw';
 import { ContextManager } from './context.manager';
-import { CodeTestElement, type TestResultState, type TestState } from './code-test';
+import { CodeTestElement, type CodeTestState, type TestResultCategory, type TestResultState, type TestState } from './code-test';
 import { CodeTestEvent } from './code-test-event';
 import type { Test } from './types/test.type';
-import type { GroupTestResults } from './types/test-result.type';
+import type { GroupTestResults, TestResult, TestResultType } from './types/test-result.type';
 import { TestPromise } from './test-promise';
 import { assignClassAndIdToPart } from 'ce-part-utils';
+import type { TestContext } from './types/test-context.type';
 
 export type CodeTestsState = 
 {
@@ -596,6 +597,8 @@ export function createElementFromTemplate(target: string|HTMLTemplateElement, pa
 
     return firstChild;
 }
+
+export type { TestContext, GroupTestResults, CodeTestState, Test, TestResult, TestResultCategory, TestResultState, TestResultType, TestState }
 
 export {
     CodeTestEvent,
