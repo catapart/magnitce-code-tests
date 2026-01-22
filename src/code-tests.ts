@@ -179,7 +179,14 @@ export class CodeTestsElement extends HTMLElement
 
         this.#isInitialized = true;
 
-        if(this.getAttribute('auto') == 'false') { return; }
+        let autoAttribute = this.getAttribute('auto');
+        if(autoAttribute == 'false') { return; }
+        if(this.closest('test-runner') != null && autoAttribute != "true") { return; }
+
+        //todo: finish magnit-ce package files
+        // publish new version
+        // updated test-runner dependency
+        // refactor test runner to load code-test children
         this.reloadTests();
     }
     #destroy()
