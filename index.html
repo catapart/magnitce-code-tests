@@ -11,8 +11,8 @@
             display: none;
         }
     </style>
-    <link rel="stylesheet" href="./introduction.theme.css">
-    <link rel="stylesheet" href="./index.css">
+    <link rel="stylesheet" href="./public/introduction.theme.css">
+    <link rel="stylesheet" href="./public/index.css">
 
     <noscript>
         <style>
@@ -70,8 +70,8 @@
                         </a>
                     </div>
                     <div class="actions">
-                        <a href="./test-runner/">Test Runner</a>
-                        <a href="./documentation/">Documentation</a>
+                        <a href="./tests.html">Test Runner</a>
+                        <a href="./docs/">Documentation</a>
                     </div>
                 </div>
             </div>
@@ -108,7 +108,7 @@
                 <header>
                     <h3>Installation</h3>
                 </header>
-                <p>This library is available as a <a href="">single file</a> that can be referenced using a <code>&lt;script&gt;</code> element. It can also be installed using any of the javascript package managers below:</p>
+                <p>This library is available as a <a href="https://cdn.jsdelivr.net/npm/@magnit-ce/code-tests">single file</a> that can be referenced using a <code>&lt;script&gt;</code> element. It can also be installed using any of the javascript package managers below:</p>
             </section>
             <div class="install-component">
                 <code-example id="install-example" class="stack npm" preview="false">
@@ -204,13 +204,13 @@
             </section>
             <code-example class="stack" preview="false">
                 <code slot class="language-html">
-
+                    <code-tests src="tests/library.tests.js" title="Library"></code-tests>
                 </code>
             </code-example>
             <script>
                 document.addEventListener('DOMContentLoaded', () => {
                     const codeExample = document.querySelector('.quick-reference code-example');
-                    codeExample.appendScriptElementToHTMLExample("", 'module');
+                    codeExample.appendScriptElementToHTMLExample("https://cdn.jsdelivr.net/npm/@magnit-ce/code-tests", 'module');
                 });
             </script>
             <noscript>
@@ -219,7 +219,7 @@
                         <h5>HTML</h5>
                     </header>
                     <textarea spellcheck="false" class="html"><code-tests src="tests/library.tests.js" title="Library"></code-tests>
-<script type="module" src="/path/to/code-tests[.min].js"></script></textarea>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@magnit-ce/code-tests"></script></textarea>
                 </div>
             </noscript>
             <section class="reference-tables">
@@ -444,8 +444,8 @@
             <path style="fill:var(--fill-color,currentcolor);fill-opacity:1;stroke-width:3.90681;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill;stop-color:var(--fill-color,currentcolor)" d="M 16.82883,0.54673487 C 15.666456,1.6041177 15.531557,3.3434838 15.756255,4.5765617 c 0,0 -0.01115,0.026693 -0.02197,0.052187 L 19.28024,8.174703 c 0.02552,-0.010812 0.05173,-0.022431 0.05173,-0.022431 1.23308,0.2246983 2.972444,0.089797 4.029826,-1.0725765 L 20.270411,3.988316 19.920211,3.6381152 Z M 15.372179,5.3039722 c -0.03697,0.058544 -0.07634,0.1190475 -0.119028,0.1812805 -0.279263,0.4072506 -4.182243,3.0372019 -5.7126222,4.06004 l 4.8227002,4.8227003 c 1.022838,-1.530379 3.65279,-5.4333592 4.06004,-5.7126223 0.06224,-0.042674 0.122736,-0.082054 0.18128,-0.1190225 z M 8.9184118,9.9595827 c -0.0013,8.41e-4 -0.02151,0.01511 -0.02151,0.01511 C 6.8153574,8.4081475 5.2054534,9.1721039 4.2215507,9.7590242 6.2236589,11.778033 6.5379915,12.07916 8.7261451,14.264535 l -7.98274646,7.982746 0.041658,0.876646 0.87664666,0.04165 7.9827465,-7.982746 c 2.1851722,2.187953 2.4861462,2.502131 4.5050532,4.504137 0.586922,-0.983901 1.351334,-2.59335 -0.215209,-4.67489 0,0 0.01373,-0.0207 0.01464,-0.02197 z" />
         </svg>
     </div>
-    <script type="module" src="/libs/code-example.min.js"></script>
-    <script type="module" src="/libs/code-tests.min.js"></script>
+    <script type="module" src="./public/libs/code-example.min.js"></script>
+    <script type="module" src="./public/libs/code-tests.min.js"></script>
 </body>
 
 </html>

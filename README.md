@@ -1,7 +1,7 @@
 # The `code-tests` Custom Element
 
 ## Overview
-A custom HTML element that renders code in a syntax-highlight text block, and the results of that code in a display frame.
+A custom html element that interprets and runs tests in a browser
 
 |||||
 |-|-|-|-|
@@ -12,7 +12,7 @@ A custom HTML element that renders code in a syntax-highlight text block, and th
 ## Quick Start
 ```html
 <code-tests src="tests/library.tests.js" title="Library"></code-tests>
-<script type="module" src="/path/to/code-tests[.min].js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@magnit-ce/code-tests"></script>
 ```
 
 ## Links

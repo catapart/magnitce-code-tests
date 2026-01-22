@@ -183,9 +183,11 @@ export class CodeTestsElement extends HTMLElement
         if(autoAttribute == 'false') { return; }
         if(this.closest('test-runner') != null && autoAttribute != "true") { return; }
 
-        //todo: finish magnit-ce package files
+        //todo: 
         // publish new version
         // updated test-runner dependency
+        // replace test-runner file in code-tests (so that the code-tests library referenced from test-runner loads tests correctly)
+        // remove code-tests dependency from magnit-ce package (reference code test content from updated test-runner)
         // refactor test runner to load code-test children
         this.reloadTests();
     }
