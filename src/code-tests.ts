@@ -208,6 +208,7 @@ export class CodeTestsElement extends HTMLElement
     {
         this.removeEventListener('click', this.#boundClickHandler);
         this.#isInitialized = false;
+        this.#isInitializing = false; // need to include this, in case destroyed before async init finishes
     }
 
     #boundClickHandler: (event: Event) => void= this.#onClick.bind(this);
