@@ -1,5 +1,11 @@
 # @magnit-ce/code-tests
 
+## 0.0.16
+
+### Patch Changes
+
+- 28aa39b: added feature to detect test-runner and prevent auto-init
+
 ## 0.0.15
 
 ### Patch Changes
