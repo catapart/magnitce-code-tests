@@ -1,5 +1,11 @@
 # @magnit-ce/code-tests
 
+## 0.0.18
+
+### Patch Changes
+
+- b00b814: refactored init to emit event and await context manager loading
+
 ## 0.0.17
 
 ### Patch Changes
