@@ -1,5 +1,11 @@
 # @magnit-ce/code-tests
 
+## 0.0.17
+
+### Patch Changes
+
+- 461d2d0: refactored parent test-runner check to find element through shadow root
+
 ## 0.0.16
 
 ### Patch Changes
