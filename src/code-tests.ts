@@ -181,7 +181,9 @@ export class CodeTestsElement extends HTMLElement
 
         let autoAttribute = this.getAttribute('auto');
         if(autoAttribute == 'false') { return; }
-        if(this.closest('test-runner') != null && autoAttribute != "true") { return; }
+        //@ts-expect-error ts doesn't think host exits
+        const parentTestRunner = this.getRootNode()?.host;
+        if(parentTestRunner != null && autoAttribute != "true") { return; }
 
         //todo: 
         // publish new version
