@@ -233,6 +233,49 @@ main > header .content > *
     grid-column: 2;
 }
 
+main > header .content .text
+{
+    column-gap: var(--gap-large);
+    grid-template-columns: auto auto 1fr;
+}
+
+main > header .repos
+{
+    align-content: flex-end;
+    margin-bottom: 1rem;
+}
+
+main > header .repos .icon
+{
+    width: var(--repo-icon-size);
+    height: var(--repo-icon-size);
+    border-radius: 50%;
+}
+
+main > header .actions
+{
+    display: grid;
+    grid-template-columns: auto auto;
+    align-content: flex-end;
+    justify-content: flex-end;
+}
+
+main > header .actions a
+{
+    color: var(--text-highlight-anchor);
+    text-decoration: none;
+    padding: var(--gap-small) var(--gap);
+    display: inline-block;
+    border-radius: 30px;
+    margin-block: var(--gap-small);
+}
+
+main > header .actions a:hover
+{
+    color: #ffffff;
+    text-shadow: 1px 1px 0 rgb(0 0 0 / .2);
+    background: rgb(0 0 0 / .3);
+}
 
 main > article
 {
@@ -357,6 +400,12 @@ table th
     color: var(--text-table-head);
 }
 
+table th.accent
+,table td.accent
+{
+    width: 220px;
+}
+
 table td
 {
 }
@@ -407,6 +456,11 @@ code-example::part(panel)
 ,code-example::part(preview)
 {
     box-shadow: 1px 1px 5px 1px rgb(0 0 0 / .4);
+}
+
+.code-title .option
+{
+    cursor: pointer;
 }
 
 footer
