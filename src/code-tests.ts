@@ -178,6 +178,7 @@ export class CodeTestsElement extends HTMLElement
             this.#contextManager = new ContextManager(this);
 
             this.#isInitialized = true;
+            this.#isInitializing = false;
 
             const allowAutoLoad = this.dispatchEvent(new CustomEvent('init', { bubbles: true, composed: true, cancelable: true, detail: { target: this }}));
             if(allowAutoLoad == false) { resolve(); return; }
@@ -206,6 +207,7 @@ export class CodeTestsElement extends HTMLElement
     #destroy()
     {
         this.removeEventListener('click', this.#boundClickHandler);
+        this.#isInitialized = false;
     }
 
     #boundClickHandler: (event: Event) => void= this.#onClick.bind(this);
