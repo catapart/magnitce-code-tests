@@ -1,5 +1,11 @@
 # @magnit-ce/code-tests
 
+## 0.0.20
+
+### Patch Changes
+
+- 9f80d64: fixed issue with click handler
+
 ## 0.0.19
 
 ### Patch Changes
