@@ -45,7 +45,6 @@
     display: flex;
     align-items: center;
     gap: var(--gap);
-    padding: var(--gap-small) var(--gap);
 }
 #title
 {
@@ -104,7 +103,7 @@ summary:not(#component-summary)
 }
 #component-summary
 {
-    padding-block: var(--gap-small);
+    padding: var(--gap-small)
 }
 
 
@@ -126,6 +125,15 @@ summary > .arrow-icon
 details[open] > summary > .arrow-icon
 {
     transform: rotate(0);
+}
+
+#enabled
+{
+    display: none;
+}
+:host([optional]) #enabled
+{
+    display: block;
 }
 
 /* Result Icon */

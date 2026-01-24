@@ -18,7 +18,7 @@ export type Hooks = {
     [Hook.Context]?: Test,
 };
 
-export class ContextManager
+export class CodeTestsContext
 {
     codeTestsElement: CodeTestsElement;
     // testContext?: TestContext;

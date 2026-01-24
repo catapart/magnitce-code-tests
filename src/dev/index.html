@@ -28,11 +28,11 @@
     <test-runner>
       <code-tests src="../../tests/before-after.tests.js" label="code-tests element"></code-tests>
       <div id="subject">
-        <code-tests src="../../tests/before-after.tests.js" ></code-tests>
+        <code-tests id="target" label="Direct Access" ordered="false" src="../../tests/direct-access.tests.js" ></code-tests>
       </div>
     </test-runner>
+    <!-- <script type="module" src="../code-tests.ts"></script> -->
     <script type="module" src="../../libs/test-runner.min.js"></script>
-    <script type="module" src="../code-tests.ts"></script>
     <script type="module" src="./dev.ts"></script>
 </body>
 

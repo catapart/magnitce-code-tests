@@ -13,8 +13,8 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "test:build": "vite build --config vite.config.tests.ts",
-    "test": "npm run test:build && web-dev-server --watch --app-index test-runner/index.html",
+    "test:build": "echo \"\nThis package cannot build tests because tests rely on referencing this package to build.\nVite/rollup's bundler does not allow excluding references to the entry point, and the entry point in this package is set to the code-tests library.\n\nOther libraries can use this command to convert .test.ts files into .js files in the public/tests directory, but this one must build tests manually.\"",
+    "test": "web-dev-server --watch --app-index test-runner/index.html",
     "changeset": "npx @changesets/cli",
     "release": "npm run build && npx @changesets/cli publish"
   },

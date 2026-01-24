@@ -1,4 +1,4 @@
-import type { ContextManager } from './context.manager';
+import type { CodeTestsContext } from './context';
 import { CodeTestEvent } from './code-test-event';
 import type { TestContext } from './types/test-context.type';
 import type { Test } from './types/test.type';
@@ -259,7 +259,7 @@ export class CodeTestElement extends HTMLElement
         this.findElement('.run-test-button').toggleAttribute('disabled', true);
     }
 
-    async runTest(contextManager: ContextManager, testContext: TestContext)
+    async runTest(contextManager: CodeTestsContext, testContext: TestContext)
     {
         if(this.state.testState?.test == null) { return; }
 

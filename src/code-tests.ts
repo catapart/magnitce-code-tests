@@ -1,7 +1,7 @@
 
 import { default as style } from './code-tests.css?raw';
 import { default as html } from './code-tests.html?raw';
-import { ContextManager } from './context.manager';
+import { CodeTestsContext } from './context';
 import { CodeTestElement, type CodeTestState, type TestResultCategory, type TestResultState, type TestState } from './code-test';
 import { CodeTestEvent } from './code-test-event';
 import type { Test } from './types/test.type';
@@ -133,14 +133,14 @@ export class CodeTestsElement extends HTMLElement
         {
             return 'fail';
         }
-        else if(testCategory == 'success' && statesCategory == 'success')
+        else if(testCategory == 'success' || statesCategory == 'success')
         {
             return 'success';
         }
         return 'none';
     }
 
-    #contextManager!: ContextManager;
+    #context!: CodeTestsContext;
 
     constructor()
     {
@@ -169,13 +169,14 @@ export class CodeTestsElement extends HTMLElement
         assignClassAndIdToPart(this.shadowRoot!);
 
         this.addEventListener('click', this.#boundClickHandler);
+        this.findElement<HTMLInputElement>('#enabled').addEventListener('change', this.#boundEnabledHandler);
 
         await new Promise<void>(resolve => requestAnimationFrame(() =>
         {
             // wait a frame to make sure that the ContextManager class
             // has been interpreted by the browser
             // (connectedCallback may fire before the library loads)
-            this.#contextManager = new ContextManager(this);
+            this.#context = new CodeTestsContext(this);
 
             this.#isInitialized = true;
             this.#isInitializing = false;
@@ -201,12 +202,11 @@ export class CodeTestsElement extends HTMLElement
         // updated test-runner dependency
         // replace test-runner file in code-tests (so that the code-tests library referenced from test-runner loads tests correctly)
         // remove code-tests dependency from magnit-ce package (reference code test content from updated test-runner)
-        // refactor test runner to load code-test children
-        // unordered tests don't indicate they are finished after tests run
     }
     #destroy()
     {
         this.removeEventListener('click', this.#boundClickHandler);
+        this.findElement<HTMLInputElement>('#enabled').removeEventListener('change', this.#boundEnabledHandler);
         this.#isInitialized = false;
         this.#isInitializing = false; // need to include this, in case destroyed before async init finishes
     }
@@ -242,7 +242,14 @@ export class CodeTestsElement extends HTMLElement
         if(runButton == null) { return; }
 
         const test = runButton.closest<CodeTestElement>('code-test') ?? undefined;
-        this.#contextManager.runTest(test, false);
+        this.#context.runTest(test, false);
+    }
+    #boundEnabledHandler: (event: Event) => void= this.#enabled_onChange.bind(this);
+    #enabled_onChange(event: Event)
+    {
+        const input = event.target as HTMLInputElement;
+        const allowToggle = this.dispatchEvent(new CustomEvent('enabled', { bubbles: true, composed: true, cancelable: true, detail: { target: this }}));
+        if(allowToggle == false) { event.preventDefault(); event.stopPropagation(); input.checked = !input.checked; }
     }
 
     #getCurrentTestsPath()
@@ -421,7 +428,7 @@ export class CodeTestsElement extends HTMLElement
     async runTests()
     {
         const tests = this.findElements<CodeTestElement>('code-test');
-        return this.#contextManager.runTests(tests);
+        return this.#context.runTests(tests);
     }
 
     async reloadTests()
@@ -429,7 +436,7 @@ export class CodeTestsElement extends HTMLElement
         this.findElement('#tests').innerHTML = '';
         await this.reset();
         const testsPath = this.#getCurrentTestsPath();
-        this.#contextManager.loadTests(testsPath);
+        this.#context.loadTests(testsPath);
     }
 
     async reset()
@@ -489,11 +496,11 @@ export class CodeTestsElement extends HTMLElement
             requiredBeforeAnyState,
         });
 
-        this.#contextManager.shouldContinueRunningTests = true;
+        this.#context.shouldContinueRunningTests = true;
 
         if(this.state.resetHook != null)
         {
-            await this.state.resetHook(await this.#contextManager.createTestContext());
+            await this.state.resetHook(await this.#context.createTestContext());
         }
 
         this.dispatchEvent(new CustomEvent(CodeTestEvent.Reset, { bubbles: true, composed: true }));
@@ -502,7 +509,7 @@ export class CodeTestsElement extends HTMLElement
     cancel()
     {
         this.state.isCanceled = true;
-        this.#contextManager.shouldContinueRunningTests = false;
+        this.#context.shouldContinueRunningTests = false;
         this.classList.add('canceled');
         this.part.add('canceled');
 

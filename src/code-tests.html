@@ -4,6 +4,9 @@
         <slot name="header">
             <header id="header">
                 <span id="component-result-icon" class="result-icon"></span>
+                <slot name="enabled-toggle">
+                    <input type="checkbox" name="enabled" id="enabled" title="Enabled?" checked />
+                </slot>
                 <span id="title"><slot name="title"><span id="title-text">Tests</span></slot></span>
                 <slot name="reload-button">
                     <button type="button" id="reload-button" title="Reload">

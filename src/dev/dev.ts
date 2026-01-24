@@ -15,4 +15,12 @@ else
 async function init()
 {
     console.log('hello world');
+
+    // const target = document.querySelector('#target');
+    // target?.addEventListener('enabled', (event: Event) =>
+    // {
+    //     const customEvent = event as CustomEvent;
+    //     const element = customEvent.detail.target;
+    //     // event.preventDefault();
+    // });
 }
