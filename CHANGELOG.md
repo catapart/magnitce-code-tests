@@ -1,5 +1,11 @@
 # @magnit-ce/code-tests
 
+## 0.1.0
+
+### Minor Changes
+
+- a2ae8b8: added enabled feature + minor fixes
+
 ## 0.0.20
 
 ### Patch Changes
