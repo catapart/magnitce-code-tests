@@ -159,10 +159,12 @@ export class CodeTestsElement extends HTMLElement
         this.#destroy();
     }
 
+    #isInitializing: boolean = false;
     #isInitialized: boolean = false;
     async #init()
     {
-        if(this.#isInitialized == true) { return; }
+        if(this.#isInitializing == true || this.#isInitialized == true) { return; }
+        this.#isInitializing = true;
 
         assignClassAndIdToPart(this.shadowRoot!);
 
@@ -174,16 +176,24 @@ export class CodeTestsElement extends HTMLElement
             // has been interpreted by the browser
             // (connectedCallback may fire before the library loads)
             this.#contextManager = new ContextManager(this);
+
+            this.#isInitialized = true;
+
+            const allowAutoLoad = this.dispatchEvent(new CustomEvent('init', { bubbles: true, composed: true, cancelable: true, detail: { target: this }}));
+            if(allowAutoLoad == false) { resolve(); return; }
+
+            let autoAttribute = this.getAttribute('auto');
+            if(autoAttribute == 'false') { resolve(); return; }
+
+            this.reloadTests();
+            
             resolve();
         }));
 
-        this.#isInitialized = true;
 
-        let autoAttribute = this.getAttribute('auto');
-        if(autoAttribute == 'false') { return; }
-        //@ts-expect-error ts doesn't think host exits
-        const parentTestRunner = this.getRootNode()?.host;
-        if(parentTestRunner != null && autoAttribute != "true") { return; }
+        // //@ts-expect-error ts doesn't think host exits
+        // const parentTestRunner = this.getRootNode()?.host;
+        // if(parentTestRunner != null && autoAttribute != "true") { return; }
 
         //todo: 
         // publish new version
@@ -191,7 +201,7 @@ export class CodeTestsElement extends HTMLElement
         // replace test-runner file in code-tests (so that the code-tests library referenced from test-runner loads tests correctly)
         // remove code-tests dependency from magnit-ce package (reference code test content from updated test-runner)
         // refactor test runner to load code-test children
-        this.reloadTests();
+        // unordered tests don't indicate they are finished after tests run
     }
     #destroy()
     {
