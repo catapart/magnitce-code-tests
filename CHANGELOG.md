@@ -1,5 +1,11 @@
 # @magnit-ce/code-tests
 
+## 0.0.19
+
+### Patch Changes
+
+- 645006b: fixed issue with click event being deregistered
+
 ## 0.0.18
 
 ### Patch Changes
