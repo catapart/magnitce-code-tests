@@ -181,7 +181,7 @@ export class CodeTestsElement extends HTMLElement
             this.#isInitialized = true;
             this.#isInitializing = false;
 
-            const allowAutoLoad = this.dispatchEvent(new CustomEvent('init', { bubbles: true, composed: true, cancelable: true, detail: { target: this }}));
+            const allowAutoLoad = this.dispatchEvent(new CustomEvent(CodeTestEvent.Init, { bubbles: true, composed: true, cancelable: true, detail: { target: this }}));
             if(allowAutoLoad == false) { resolve(); return; }
 
             let autoAttribute = this.getAttribute('auto');
@@ -192,14 +192,7 @@ export class CodeTestsElement extends HTMLElement
             resolve();
         }));
 
-
-        // //@ts-expect-error ts doesn't think host exits
-        // const parentTestRunner = this.getRootNode()?.host;
-        // if(parentTestRunner != null && autoAttribute != "true") { return; }
-
         //todo: 
-        // publish new version
-        // updated test-runner dependency
         // replace test-runner file in code-tests (so that the code-tests library referenced from test-runner loads tests correctly)
         // remove code-tests dependency from magnit-ce package (reference code test content from updated test-runner)
     }
@@ -248,7 +241,7 @@ export class CodeTestsElement extends HTMLElement
     #enabled_onChange(event: Event)
     {
         const input = event.target as HTMLInputElement;
-        const allowToggle = this.dispatchEvent(new CustomEvent('enabled', { bubbles: true, composed: true, cancelable: true, detail: { target: this }}));
+        const allowToggle = this.dispatchEvent(new CustomEvent(CodeTestEvent.Enabled, { bubbles: true, composed: true, cancelable: true, detail: { target: this }}));
         if(allowToggle == false) { event.preventDefault(); event.stopPropagation(); input.checked = !input.checked; }
     }
 
@@ -317,12 +310,12 @@ export class CodeTestsElement extends HTMLElement
         {
             runAllButtonLabel.textContent = isRunning == true
             ? "Cancel"
-            : (resultCategory == 'fail')
+            : (resultCategory == 'fail' || resultCategory == 'success')
             ? "Reset"
             : "Run Tests";
             runAllButtonLabel.title = isRunning == true
             ? "Cancel the testing"
-            : (resultCategory == 'fail')
+            : (resultCategory == 'fail' || resultCategory == 'success')
             ? "Reset the tests so they can be run again"
             : "Run the tests";
         }
@@ -331,7 +324,7 @@ export class CodeTestsElement extends HTMLElement
         {
             runAllIcon.innerHTML = isRunning == true
             ? '<use href="#icon-definition_cancel"></use>'
-            : (resultCategory == 'fail')
+            : (resultCategory == 'fail' || resultCategory == 'success')
             ? '<use href="#icon-definition_reset"></use>'
             : '<use href="#icon-definition_arrow"></use>';
         }

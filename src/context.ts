@@ -314,6 +314,7 @@ export class CodeTestsContext
         {
             tests[i].enable();
         }
+        this.codeTestsElement.dispatchEvent(new CustomEvent(CodeTestEvent.TestEnd, { bubbles: true, composed: true, cancelable: true, detail: { target: this }}));
     }
 
     async runHook(testStateName: keyof Pick<CodeTestsState, 'requiredBeforeAnyState'|'requiredAfterAnyState'|'beforeEachState'|'afterEachState'|'beforeAllState'|'afterAllState'>, 

@@ -159,7 +159,7 @@ export class CodeTestElement extends HTMLElement
             <summary class="test-summary" part="test-summary">
                 <svg class="icon arrow-icon"><use href="#icon-definition_arrow"></use></svg>
                 <div class="result-icon test-result-icon${this.state.testState?.resultCategory != 'none' ? ` ${this.state.testState?.resultCategory}` : ''}" part="result-icon"></div>
-                <span class="test-description description">${this.state.description}</span>
+                <span class="test-description description" title="${this.state.description}">${this.state.description}</span>
                 ${this.state.testState?.duration != null && this.state.testState.duration > 0
                 ? `<span class="test-duration duration">
                         <span class="test-duration-value">${this.state.testState.duration > 10 ? this.state.testState.duration.toFixed(0) : this.state.testState.duration.toFixed(2)}</span>

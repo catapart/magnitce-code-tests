@@ -21,6 +21,11 @@
             display: grid;
             overflow: hidden;
         }
+
+        test-runner::part(subject)
+        {
+            width: 350px;
+        }
     </style>
 </head>
 
@@ -31,7 +36,7 @@
         <code-tests id="target" label="Direct Access" ordered="false" src="../../tests/direct-access.tests.js" ></code-tests>
       </div>
     </test-runner>
-    <!-- <script type="module" src="../code-tests.ts"></script> -->
+    <script type="module" src="../code-tests.ts"></script>
     <script type="module" src="../../libs/test-runner.min.js"></script>
     <script type="module" src="./dev.ts"></script>
 </body>

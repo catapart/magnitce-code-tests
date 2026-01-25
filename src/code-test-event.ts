@@ -9,5 +9,8 @@ export const CodeTestEvent =
     Cancel: 'cancel',
     Context: 'context',
     Reset: 'reset',
+    TestEnd: 'testend',
+    Init: 'init',
+    Enabled: 'enabled',
 }
 export type CodeTestEventType = typeof CodeTestEvent[keyof typeof CodeTestEvent];

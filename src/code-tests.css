@@ -18,15 +18,7 @@
     --border-process: solid 1px var(--primary-process);
 
 
-
-    --surface-test-summary: var(--uchu-gray);
-    --surface-hook-summary: var(--uchu-light-purple);
-    --surface-hook-any-summary: var(--uchu-light-blue);
-    
-    --border-test: solid 1px var(--uchu-dark-gray);
-    --border-hook: solid 1px var(--uchu-dark-purple);
-    --border-hook-any: solid 1px var(--uchu-dark-blue);
-    --border-button: solid 1px var(--uchu-blue);
+    --surface-footer: rgb(0 0 0 / .04);
     
     --success-icon: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%232e943a" d="M20.285 2l-11.285 11.567-5.286-5.011-3.714 3.716 9 8.728 15-15.285z"/></svg>');
     --info-icon: url('data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2022.812714%2022.814663%22%20version%3D%221.1%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20xmlns%3Asvg%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20style%3D%22fill%3Atransparent%3Bstroke%3Atransparent%3Bstroke-width%3A0.999999%3Bstroke-linejoin%3Around%3Bstroke-miterlimit%3A6.3%3Bstroke-dasharray%3Anone%3Bstroke-dashoffset%3A29.2913%3Bstroke-opacity%3A1%22%20d%3D%22M%2022.295505%2C11.407332%20A%2010.889144%2C10.889144%200%200%201%2011.406424%2C22.296479%2010.889144%2C10.889144%200%200%201%200.51720881%2C11.407332%2010.889144%2C10.889144%200%200%201%2011.406424%2C0.51818382%2010.889144%2C10.889144%200%200%201%2022.295505%2C11.407332%20Z%22%3E%3C%2Fpath%3E%3Cpath%20d%3D%22m%2013.945668%2C4.3053761%20c%200.150778%2C-0.96462%20-0.30687%2C-1.43709%20-1.36997%2C-1.43709%20-1.063%2C0%20-1.668452%2C0.47247%20-1.81923%2C1.43709%20-0.150779%2C0.96462%200.306971%2C1.43708%201.369971%2C1.43708%201.004%2C0%201.66845%2C-0.47246%201.819229%2C-1.43708%20z%20M%2011.693889%2C17.829726%2013.373994%2C7.0811161%20h%20-2.9333%20L%208.7605887%2C17.829726%20Z%22%20style%3D%22font-size%3A19.6861px%3Bfont-family%3APassageway%3B-inkscape-font-specification%3APassageway%3Bfill%3A%23a30d30%3Bstroke-width%3A2.5%3Bstroke-linejoin%3Around%3Bstroke-miterlimit%3A6.3%3Bstroke-dashoffset%3A29.2913%22%20aria-label%3D%22i%22%3E%3C%2Fpath%3E%3C%2Fsvg%3E');
@@ -37,6 +29,13 @@
     grid-auto-rows: max-content;
     font-family: sans-serif;
     font-size: 12px;
+}
+@media (prefers-color-scheme: dark) 
+{
+    :host
+    {
+        --surface-footer: rgb(255 255 255 / .1);
+    }
 }
 
 #header
@@ -49,13 +48,16 @@
 #title
 {
     flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 #tests
 ,#component-content
 {
     display: grid;
-    gap: var(--gap);
+    gap: var(--gap-small);
     grid-auto-rows: max-content;
 }
 
@@ -99,11 +101,13 @@ summary > .run-test-button
 
 summary:not(#component-summary)
 {
-    padding: var(--gap-small) var(--gap);
+    padding: var(--gap-small);
 }
 #component-summary
 {
-    padding: var(--gap-small)
+    padding: var(--gap) var(--gap-small);
+    border-bottom: solid 1px;
+    margin-bottom: var(--gap-small);
 }
 
 
@@ -305,6 +309,10 @@ code-test
 code-test > details > summary > .description
 {
     flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 0; /* hack to make overflow work right; "contain: inline-size" is correct fix, but it's too new to implement on jan 25, 2026; */
 }
 :host(:not([ordered="false"])) code-test > details > summary > .description::before
 {
@@ -316,7 +324,6 @@ code-test > details > summary > .description
 {
     border-radius: 3px;
     border: solid 1px;
-    /* background: rgb(0 0 0 / .2); */
     font-family: monospace;
     text-transform: uppercase;
     font-size: 11px;
@@ -327,12 +334,29 @@ code-test > details > summary > .description
 {
     display: flex;
     justify-content: flex-end;
+    border-top: solid 1px;
+    border-bottom: solid 1px;
+    background: var(--surface-footer);
+    margin-top: var(--gap-small);
 }
 #group-results
 {
     display: flex;
     gap: var(--gap);
     padding: var(--gap);
+}
+
+#results-progress-value
+{
+    min-width: 40px;
+    width: auto;
+}
+
+#duration
+,#passed-total-pair
+,#passed-total-percent
+{
+    white-space: nowrap;
 }
 
 #passed-total-percent::before
