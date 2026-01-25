@@ -275,6 +275,10 @@ export class CodeTestsContext
         }
 
         testContext = testContext ?? await this.createTestContext(test);
+        if(testContext.testElement == null)
+        {
+            testContext.testElement = test;
+        }
 
         if(inLoop == false)
         { 
