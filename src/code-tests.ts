@@ -561,10 +561,11 @@ export type PromptOptions = {
 };
 export async function prompt(host: CodeTestElement, parentElement: HTMLElement, message: string, options?: PromptOptions)
 {
-    return new Promise<boolean>((resolve, _reject) =>
+    let promptElement: HTMLElement|null = null;
+    const result = await new Promise<boolean>((resolve, _reject) =>
     {
         const template = options?.template ?? host.querySelector<HTMLTemplateElement>('.prompt-template') ?? host.findElement<HTMLTemplateElement>('#prompt-template');
-        const promptElement = createElementFromTemplate(template);
+        promptElement = createElementFromTemplate(template);
         promptElement.querySelector('.label')!.textContent = message;
 
         
@@ -576,7 +577,7 @@ export async function prompt(host: CodeTestElement, parentElement: HTMLElement, 
             if(acceptButton != null)
             {
                 const result = options?.onAccept?.() ?? true;
-                promptElement.removeEventListener('click', clickHandler);
+                promptElement!.removeEventListener('click', clickHandler);
                 resolve(result);
                 return;
             }
@@ -585,7 +586,7 @@ export async function prompt(host: CodeTestElement, parentElement: HTMLElement, 
             if(rejectButton != null)
             {
                 const result = options?.onReject?.() ?? false;
-                promptElement.removeEventListener('click', clickHandler);
+                promptElement!.removeEventListener('click', clickHandler);
                 resolve(result);
                 return;
             }
@@ -603,6 +604,16 @@ export async function prompt(host: CodeTestElement, parentElement: HTMLElement, 
         
         parentElement.append(promptElement);
     });
+    
+    if(promptElement != null)
+    {
+        //@ts-expect-error ts thinks this doesn't work (it does)
+        promptElement.remove();
+    }
+
+    host.dispatchEvent(new CustomEvent(CodeTestEvent.PromptResult, { bubbles: true, composed: true, detail: { target: host, result } }));
+
+    return result;
 }
 export function createElementFromTemplate(target: string|HTMLTemplateElement, parent?: HTMLElement)
 {
