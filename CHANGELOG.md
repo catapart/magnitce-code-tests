@@ -1,5 +1,11 @@
 # @magnit-ce/code-tests
 
+## 0.1.1
+
+### Patch Changes
+
+- 1470114: style and api fixes
+
 ## 0.1.0
 
 ### Minor Changes
