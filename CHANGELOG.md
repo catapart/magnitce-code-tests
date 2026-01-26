@@ -1,5 +1,11 @@
 # @magnit-ce/code-tests
 
+## 0.1.3
+
+### Patch Changes
+
+- 2b24905: added promptinject event
+
 ## 0.1.2
 
 ### Patch Changes
