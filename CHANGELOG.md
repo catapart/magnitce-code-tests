@@ -1,5 +1,12 @@
 # @magnit-ce/code-tests
 
+## 0.1.2
+
+### Patch Changes
+
+- 15ae429: fixed issue with context not including test element correctly
+- fc1a33a: refactored prompt to be removed after resolution
+
 ## 0.1.1
 
 ### Patch Changes
