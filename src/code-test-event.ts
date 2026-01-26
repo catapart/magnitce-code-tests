@@ -12,6 +12,7 @@ export const CodeTestEvent =
     TestEnd: 'testend',
     Init: 'init',
     Enabled: 'enabled',
+    PromptInject: 'promptinject',
     PromptResult: 'promptresult',
 }
 export type CodeTestEventType = typeof CodeTestEvent[keyof typeof CodeTestEvent];

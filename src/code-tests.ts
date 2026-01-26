@@ -602,6 +602,7 @@ export async function prompt(host: CodeTestElement, parentElement: HTMLElement, 
             promptElement.querySelector('.reject')!.textContent = options.rejectLabel;
         }
         
+        host.dispatchEvent(new CustomEvent(CodeTestEvent.PromptInject, { bubbles: true, composed: true, detail: { codeTestElement: host, promptElement } }));
         parentElement.append(promptElement);
     });
     
