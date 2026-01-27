@@ -5,7 +5,7 @@ A custom html element that interprets and runs tests in a browser
 
 |||||
 |-|-|-|-|
-|Package size, **verbose**:|~36kb|Package size, **minified**:|~24kb|
+|Package size, **verbose**:|~68kb|Package size, **minified**:|~51kb|
 
 
 
