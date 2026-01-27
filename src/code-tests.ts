@@ -553,21 +553,22 @@ export function expect<T>(value: T)
 
 
 export type PromptOptions = {
+    parentElement?: HTMLElement,
     template?: HTMLTemplateElement,
     acceptLabel?: string,
     rejectLabel?: string,
     onAccept?: () => void,
     onReject?: () => void
 };
-export async function prompt(host: CodeTestElement, parentElement: HTMLElement, message: string, options?: PromptOptions)
+export async function prompt(context: TestContext, message: string, options?: PromptOptions)
 {
+    const host = context.codeTestsElement;
     let promptElement: HTMLElement|null = null;
     const result = await new Promise<boolean>((resolve, _reject) =>
     {
         const template = options?.template ?? host.querySelector<HTMLTemplateElement>('.prompt-template') ?? host.findElement<HTMLTemplateElement>('#prompt-template');
         promptElement = createElementFromTemplate(template);
         promptElement.querySelector('.label')!.textContent = message;
-
         
         const clickHandler = (event: Event) =>
         {
@@ -602,8 +603,10 @@ export async function prompt(host: CodeTestElement, parentElement: HTMLElement, 
             promptElement.querySelector('.reject')!.textContent = options.rejectLabel;
         }
         
-        host.dispatchEvent(new CustomEvent(CodeTestEvent.PromptInject, { bubbles: true, composed: true, detail: { codeTestElement: host, promptElement } }));
-        parentElement.append(promptElement);
+        host.dispatchEvent(new CustomEvent(CodeTestEvent.PromptInject, { bubbles: true, composed: true, detail: { codeTestElement: context.testElement, promptElement } }));
+        
+        const parent = options?.parentElement ?? context.testElement?.getMessageElement();
+        parent?.append(promptElement);
     });
     
     if(promptElement != null)

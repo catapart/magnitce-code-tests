@@ -3,7 +3,7 @@ import { expect, prompt } from '../libs/code-tests.min.js';
 export default {
     'should have access to the console api': async (context) =>
     {
-        const result = await prompt(context.codeTestsElement, context.testElement.getMessageElement(), 'New Wave? Next Wave? Dream Wave? OR Cyberpunk?');
+        const result = await prompt(context, 'New Wave? Next Wave? Dream Wave? OR Cyberpunk?');
         console.log("New Wave? Next Wave? Dream Wave? OR Cyberpunk?");
     },
     'should have access to the DOM': async () =>

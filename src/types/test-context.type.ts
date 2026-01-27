@@ -5,6 +5,5 @@ export type TestContext =
 {
     codeTestsElement: CodeTestsElement,
     testElement?: CodeTestElement,
-    messageElement?: HTMLElement,
     detail: any,
 }

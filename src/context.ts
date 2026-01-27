@@ -477,8 +477,7 @@ export class CodeTestsContext
         const context: TestContext = {
             detail: {},
             codeTestsElement: this.codeTestsElement,
-            testElement,
-            messageElement: testElement?.findElement('.message')
+            testElement
         };
 
         // this.testContext = context;
