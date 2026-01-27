@@ -1,5 +1,11 @@
 # @magnit-ce/code-tests
 
+## 0.1.4
+
+### Patch Changes
+
+- 09609a6: fixed issue for prompt not accessing test element correctly
+
 ## 0.1.3
 
 ### Patch Changes
