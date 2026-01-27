@@ -48,7 +48,7 @@ Use `vite` to transpile the source code into code chunks or library files. Files
 #### `preview`
 Use `vite` to serve the `dist` directory. Useful for non-library projects, where the `dist` directory will contain an `index.html` file, or other browse-able entry point.
 #### `test:build`
-Use `vite` to transpile all files with a `.tests.[ts|js|tsx|jsx]` extension into the `test-runner` subdirectory. Creates javascript files that can be served to the `<test-runner>` and `<code-tests>` components.
+Use `vite` to transpile all files with a `.tests.[ts|js|tsx|jsx]` extension into the `public/tests` subdirectory. Creates javascript files that can be served to the `<test-runner>` and `<code-tests>` components, which are included in the `public/libs` subdirectory.
 #### `test`
 Runs the `test:build` script and then serves the library website using `serve`, to prevent module resolution issues that occur when running the `dev` script.
 #### `changeset`
@@ -106,7 +106,8 @@ This plugin for the `vite` library allows the packaging process to also produce 
 This plugin, which was developed for one of `vite`'s dependencies (`rollup`) but is used in this project by `vite`, provides a type of minification that is not supported by the default library. Using this plugin, the library can be packaged with both unminified and minified code, so that developers who implement the library can debug the code in un-minified files, while still being able to ship a minified version without having to minify it in their own projects.
 
 ##### [`@magnit-ce/test-runner`](https://github.com/catapart/magnitce-test-runner)
-This library adds custom HTML elements that allow developers to run simple definitions for automated tests directly in a browser. These elements are used in the `test-runner` directory to provide live automated testing.
+This library adds custom HTML elements that allow developers to run simple definitions for automated tests directly in a browser. This element is used in the `dev` directory to provide live automated testing.
+
 ##### [`glob`](https://www.npmjs.com/package/glob)
 `glob` is a low-level library that provides full-featured search capabilities to a command-line input. These search features are used by this library to differentiate between test files and source files within the `vite.config` files.
 

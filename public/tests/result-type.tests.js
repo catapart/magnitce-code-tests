@@ -1,4 +1,4 @@
-import { expect, prompt } from '../libs/code-tests.min.js';
+import { expect, prompt } from '../libs/test-runner.min.js';
 
 export default {
     'should await prompt response': async (host, parent) =>

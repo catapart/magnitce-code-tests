@@ -1,4 +1,4 @@
-import { expect, Hook, prompt } from "../libs/code-tests.min.js";
+import { expect, Hook, prompt } from "../libs/test-runner.min.js";
 
 export const tests = {
     'should allow prompting in plain test': async (context) =>

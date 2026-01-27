@@ -44,8 +44,10 @@
     </header>
     <main>
         <test-runner>
-            <div class="message">Automated testing has not been prepared for this library.</div>
-
+            <code-tests src="public/tests/before-after.tests.js" label="code-tests element"></code-tests>
+            <div id="subject">
+                <code-tests id="target" label="Direct Access" ordered="false" src="public/tests/direct-access.tests.js" ></code-tests>
+            </div>
         </test-runner>
     </main>
     <div id="icon-definitions">

@@ -193,8 +193,7 @@ export class CodeTestsElement extends HTMLElement
         }));
 
         //todo: 
-        // replace test-runner file in code-tests (so that the code-tests library referenced from test-runner loads tests correctly)
-        // remove code-tests dependency from magnit-ce package (reference code test content from updated test-runner)
+        // update test-runner and readme files from docsub
     }
     #destroy()
     {

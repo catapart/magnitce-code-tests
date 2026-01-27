@@ -1,5 +1,5 @@
 import { Library } from "../libs/library.js"
-import { expect } from '../libs/code-tests.min.js';
+import { expect } from '../libs/test-runner.min.js';
 
 export const tests = {
     'should add': async () =>
