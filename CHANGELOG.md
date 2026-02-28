@@ -1,5 +1,11 @@
 # @magnit-ce/code-tests
 
+## 0.1.5
+
+### Patch Changes
+
+- e6e998b: refactored import method for test files
+
 ## 0.1.4
 
 ### Patch Changes
