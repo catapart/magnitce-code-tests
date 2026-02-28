@@ -151,16 +151,16 @@ export class CodeTestsContext
         const currentPath = (currentPathHasExtension == true)
         ? window.location.href.substring(0, lastSlashIndexInCurrentPath + 1)
         : window.location.href;
-        const moduleDirectory = currentPath + path.substring(0, path.lastIndexOf('/') + 1);
+        // const moduleDirectory = currentPath + path.substring(0, path.lastIndexOf('/') + 1);
         const modulePath = currentPath + path;
-        let moduleContent = await (await fetch(modulePath)).text();
-        moduleContent = moduleContent.replaceAll(/['"`](((\.\/)|(\.\.\/))+(.*))['"`]/g, `'${moduleDirectory}$1'`);
+        // let moduleContent = await (await fetch(modulePath)).text();
+        // moduleContent = moduleContent.replaceAll(/['"`](((\.\/)|(\.\.\/))+(.*))['"`]/g, `'${moduleDirectory}$1'`);
         // console.log(moduleContent);
-        const moduleFile = new File([moduleContent], path.substring(path.lastIndexOf('/')), { type: 'text/javascript' });
-        const moduleURL = URL.createObjectURL(moduleFile);
+        // const moduleFile = new File([moduleContent], path.substring(path.lastIndexOf('/')), { type: 'text/javascript' });
+        // const moduleURL = URL.createObjectURL(moduleFile);
         // const module = await import(`data:text/javascript,${encodeURIComponent(moduleContent)}`);
         // const module = await (await fetch(moduleURL)).text();
-        const module = await import(/* @vite-ignore */moduleURL);
+        const module = await import(/* @vite-ignore */modulePath);
         return module;
     }
     #addTest(description: string, test: Test)
