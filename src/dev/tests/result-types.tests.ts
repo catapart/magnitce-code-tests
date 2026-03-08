@@ -1,5 +1,3 @@
-import { expect } from '../../code-tests'
-
 export default {
     'should handle long results': async () =>
     {
