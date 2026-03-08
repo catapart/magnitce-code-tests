@@ -26,18 +26,25 @@
         {
             width: 350px;
         }
+
+        code-tests
+        {
+            /* max-width: 350px; */
+        }
     </style>
 </head>
 
 <body>
     <test-runner>
-      <code-tests src="../../tests/before-after.tests.js" label="code-tests element"></code-tests>
-      <div id="subject">
-        <code-tests id="target" label="Direct Access" ordered="false" src="../../tests/direct-access.tests.js" ></code-tests>
-      </div>
+      <!-- <code-tests src="./tests/before-after.tests.ts" label="code-tests element"></code-tests> -->
+        <code-tests id="target" label="Direct Access" ordered="false" src="./tests/direct-access.tests.ts" ></code-tests>
+        <code-tests id="target" label="Result Types" ordered="false" src="./tests/result-types.tests.ts" ></code-tests>
+        <div id="subject">
+        <code-tests id="target" label="Direct Access" ordered="false" src="./tests/direct-access.tests.ts" ></code-tests>
+        </div>
     </test-runner>
-    <script type="module" src="../../libs/test-runner.min.js"></script>
-    <!-- <script type="module" src="../code-tests.ts"></script> -->
+    <!-- don't want circular depenency in npm packages, so test runner is packaged and deployed, instead -->
+    <!-- <script type="module" src="/libs/test-runner.min.js"></script> -->
     <script type="module" src="./dev.ts"></script>
 </body>
 

@@ -285,11 +285,21 @@ code-test .results details .result
     margin-inline-start: 1em;
 }
 
-.result.message:empty
+code-test .result.message
+{
+    display: grid;
+    border: solid 1px #444;
+    padding: .5em;
+    overflow: auto;
+    max-height: 250px;
+    margin-block: .5em;
+}
+
+code-test .result.message:empty
 {
     padding: .5em 1em;
 }
-.result.message:empty::before
+code-test .result.message:empty::before
 {
     content: '[ this function has not been run ]';
     font-family: monospace;
@@ -297,14 +307,20 @@ code-test .results details .result
     font-style: italic;
 }
 
+code-test .result pre
+{
+    margin-block: 0;
+}
+
 /* Ordered Display */
-#tests
+code-test #tests
 {
     counter-reset: tests;
 }
 code-test
 {
     counter-increment: tests;
+    overflow: hidden;
 }
 code-test > details > summary > .description
 {

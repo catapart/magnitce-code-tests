@@ -148,9 +148,11 @@ export class CodeTestElement extends HTMLElement
         const resultMessage = this.state.testState == null
         ? ''
         : typeof this.state.testState.resultContent == 'boolean'
-        ? (this.state.testState.resultContent == true ? `<code class="code" part="code"><pre class="pre success-message" part="pre success-message">Passed</pre></code>` : `<code class="code" part="code"><pre class="pre error-message" part="pre error-message">Failed</pre></code>`)
+        ? (this.state.testState.resultContent == true
+            ? `<pre class="pre success-message" part="pre success-message">Passed</pre>`
+            : `<pre class="pre error-message" part="pre error-message">Failed</pre>`)
         : typeof this.state.testState.resultContent == 'number'
-        ? `<code class="code" part="code"><pre class="pre success-message" part="pre success-message">Passed: ${this.state.testState.resultContent.toString()}</pre></code>`
+        ? `<pre class="pre success-message" part="pre success-message">Passed: ${this.state.testState.resultContent.toString()}</pre>`
         : typeof this.state.testState.resultContent == 'string'
         ? this.state.testState.resultContent
         : '';

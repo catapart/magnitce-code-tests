@@ -409,9 +409,7 @@ export class CodeTestsContext
             ? 'success-message'
             : 'error-message';
             return { 
-                result: `<code class="code" part="code">
-                    <pre class="pre ${className}" part="pre ${className}">${message}</pre>
-                </code>`,
+                result: `<pre class="pre ${className}" part="pre ${className}">${message}</pre>`,
                 resultCategory: (finishedTest == true) ? 'success' : 'fail'
             };
         }
@@ -440,18 +438,14 @@ export class CodeTestsContext
             && objectResult.value != undefined)
             {
                 return { 
-                    result: `<code class="code" part="code">
-                        <pre class="pre ${className}" part="pre ${className}">${(objectResult.success == true) ? 'Passed' : 'Failed'}\nExpected:${objectResult.expected}\nResult:${objectResult.value}</pre>
-                    </code>`,
+                    result: `<pre class="pre ${className}" part="pre ${className}">${(objectResult.success == true) ? 'Passed' : 'Failed'}\nExpected:${objectResult.expected}\nResult:${objectResult.value}</pre>`,
                     resultCategory: (objectResult.success == true) ? 'success' : 'fail'
                 };
             }
             else if(objectResult.success != undefined)
             {
                 return { 
-                    result: `<code class="code" part="code">
-                        <pre class="pre ${className}" part="pre ${className}">${JSON.stringify(result, undefined, 2)}</pre>
-                    </code>`,
+                    result: `<pre class="pre ${className}" part="pre ${className}">${JSON.stringify(result, undefined, 2)}</pre>`,
                     resultCategory: (objectResult.success == true) ? 'success' : 'fail'
                 };
             }
@@ -461,9 +455,7 @@ export class CodeTestsContext
                 ? 'success-message'
                 : 'error-message';
                 return { 
-                    result: `<code class="code" part="code">
-                        <pre class="pre ${className}" part="pre ${className}">${JSON.stringify(result, undefined, 2)}</pre>
-                    </code>`,
+                    result: `<pre class="pre ${className}" part="pre ${className}">${JSON.stringify(result, undefined, 2)}`,
                     resultCategory: (finishedTest == true) ? 'success' : 'fail'
                 };
             }
