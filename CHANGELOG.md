@@ -1,5 +1,11 @@
 # @magnit-ce/code-tests
 
+## 0.1.6
+
+### Patch Changes
+
+- 6f9b18d: fixed overflow issue; removed code element wrapper from results
+
 ## 0.1.5
 
 ### Patch Changes
