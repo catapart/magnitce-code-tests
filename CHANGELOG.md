@@ -1,5 +1,11 @@
 # @magnit-ce/code-tests
 
+## 0.1.7
+
+### Patch Changes
+
+- 1e42ee2: updated result type to be class and work with html value content
+
 ## 0.1.6
 
 ### Patch Changes
