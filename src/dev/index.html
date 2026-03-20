@@ -37,10 +37,11 @@
 <body>
     <test-runner>
       <!-- <code-tests src="./tests/before-after.tests.ts" label="code-tests element"></code-tests> -->
-        <code-tests id="target" label="Direct Access" ordered="false" src="./tests/direct-access.tests.ts" ></code-tests>
-        <code-tests id="target" label="Result Types" ordered="false" src="./tests/result-types.tests.ts" ></code-tests>
+        <!-- <code-tests id="target" label="Direct Access" ordered="false" src="./tests/direct-access.tests.ts" ></code-tests>
+        <code-tests id="target" label="Result Types" ordered="false" src="./tests/result-types.tests.ts" ></code-tests> -->
         <div id="subject">
-        <code-tests id="target" label="Direct Access" ordered="false" src="./tests/direct-access.tests.ts" ></code-tests>
+            <code-tests id="target" label="Direct Access" ordered="false" src="./tests/direct-access.tests.ts" ></code-tests>
+            <code-tests id="target" label="Result Types" ordered="false" src="./tests/result-types.tests.ts" ></code-tests>
         </div>
     </test-runner>
     <!-- don't want circular depenency in npm packages, so test runner is packaged and deployed, instead -->

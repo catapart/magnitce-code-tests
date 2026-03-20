@@ -5,10 +5,11 @@ import { CodeTestsContext } from './context';
 import { CodeTestElement, type CodeTestState, type TestResultCategory, type TestResultState, type TestState } from './code-test';
 import { CodeTestEvent } from './code-test-event';
 import type { Test } from './types/test.type';
-import type { GroupTestResults, TestResult, TestResultType } from './types/test-result.type';
+import type { GroupTestResults, TestResultType } from './types/test-result.type';
 import { TestPromise } from './test-promise';
 import { assignClassAndIdToPart } from 'ce-part-utils';
 import type { TestContext } from './types/test-context.type';
+import { TestResult } from './test-result';
 
 export type CodeTestsState = 
 {

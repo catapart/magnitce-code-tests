@@ -419,12 +419,11 @@ export class CodeTestsContext
         }
         else if(typeof result == 'function')
         {
-            console.log('function');
-            return { result: `[A function was returned]`, resultCategory: 'none' };
+            return { result: `[A function was returned: ${(result as Function).name}]`, resultCategory: 'none' };
         }
         else if(result instanceof HTMLElement || typeof result == 'string')
         {
-            return { result, resultCategory: 'none' };
+            return { result, resultCategory: 'success' };
         }
         else if(typeof result == 'object')
         {
@@ -437,16 +436,41 @@ export class CodeTestsContext
             && objectResult.expected != undefined
             && objectResult.value != undefined)
             {
+                if(objectResult.success == true)
+                {
+                    return { 
+                        result: objectResult.value,
+                        resultCategory: 'success'
+                    };
+                }
                 return { 
                     result: `<pre class="pre ${className}" part="pre ${className}">${(objectResult.success == true) ? 'Passed' : 'Failed'}\nExpected:${objectResult.expected}\nResult:${objectResult.value}</pre>`,
-                    resultCategory: (objectResult.success == true) ? 'success' : 'fail'
+                    resultCategory: 'fail'
                 };
             }
             else if(objectResult.success != undefined)
             {
+                if(objectResult.value != undefined)
+                {
+                    if(objectResult.value instanceof HTMLElement)
+                    {
+                        return { 
+                            result: objectResult.value,
+                            resultCategory: objectResult.success == true ? 'success' : 'fail'
+                        };
+                    }
+                    else if(typeof objectResult.value == 'string')
+                    {
+                        return { 
+                            result: `<pre class="pre ${className}" part="pre ${className}">${objectResult.value}</pre>`,
+                            resultCategory: objectResult.success == true ? 'success' : 'fail'
+                        };
+                    }
+                }
+
                 return { 
                     result: `<pre class="pre ${className}" part="pre ${className}">${JSON.stringify(result, undefined, 2)}</pre>`,
-                    resultCategory: (objectResult.success == true) ? 'success' : 'fail'
+                    resultCategory: objectResult.success == true ? 'success' : 'fail'
                 };
             }
             else
